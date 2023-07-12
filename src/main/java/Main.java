@@ -79,8 +79,9 @@ public class Main {
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine);
             }
-            PacketEncoder encoder = new PacketEncoder(response.toString());
+            PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
             encoder.parsePackets();
+            System.out.println(hub.getTimestamp());
 
 
             // Print the response
@@ -123,7 +124,7 @@ public class Main {
                     while ((inputLine = in.readLine()) != null) {
                         response.append(inputLine);
                     }
-                    PacketEncoder encoder = new PacketEncoder(response.toString());
+                    PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
                     encoder.parsePackets();
                     // Print the response
                     Files.write(
@@ -186,15 +187,50 @@ public class Main {
 
 abstract class Device {
     private final String name;
-    private final long address;
+    private final long src;
     private long serial;
     private final byte dev_type;
     private long lastDeviceAddress;
+    private long timestamp;
+    private int checkSum;
 
-    Device(String name, long address, byte dev_type) {
+    // EnvSensor
+    private byte sensors;
+    private byte op;
+
+    // Socket && Lamp && Switch
+    private byte state;
+
+    // Switch
+    private List<String> devicesNames;
+
+    Device(String name, long src, byte dev_type) {
         this.name = name;
-        this.address = address;
+        this.src = src;
         this.dev_type = dev_type;
+    }
+
+    public List<String> getDevicesNames() {
+        if (this.devicesNames == null) {
+            this.devicesNames = new ArrayList<>();
+        }
+        return this.devicesNames;
+    }
+
+    public void add(String name) {
+        this.devicesNames.add(name);
+    }
+
+    public void initList(List<String> list) {
+        this.devicesNames = list;
+    }
+
+    public int getCheckSum() {
+        return checkSum;
+    }
+
+    public void setCheckSum(int checkSum) {
+        this.checkSum = checkSum;
     }
 
     public long getLastDeviceAddress() {
@@ -209,8 +245,8 @@ abstract class Device {
         return name;
     }
 
-    public long getAddress() {
-        return address;
+    public long getSrc() {
+        return src;
     }
 
 
@@ -226,6 +262,37 @@ abstract class Device {
         return dev_type;
     }
 
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public byte getSensors() {
+        return sensors;
+    }
+
+    public void setSensors(byte sensors) {
+        this.sensors = sensors;
+    }
+
+    public byte getOp() {
+        return op;
+    }
+
+    public void setOp(byte op) {
+        this.op = op;
+    }
+
+    public byte getState() {
+        return state;
+    }
+
+    public void setState(byte state) {
+        this.state = state;
+    }
 }
 
 class Hub extends Device {
@@ -240,11 +307,19 @@ class Hub extends Device {
         nameDevice.put(device.getName(), device);
     }
 
+    public Device getDevice(String name) {
+        return nameDevice.get(name);
+    }
+
+    public boolean contains(String deviceName) {
+        return nameDevice.containsKey(deviceName);
+    }
+
     public String executeWHOISHERE() {
         String ans = "";
         String name = super.getName();
         List<Integer> list = new ArrayList<>();
-        int[] src = ULEB128Util.encode(super.getAddress());
+        int[] src = ULEB128Util.encode(super.getSrc());
         for (int s : src) {
             list.add((int) s);
         }
@@ -292,59 +367,301 @@ class Hub extends Device {
 }
 
 class EnvSensor extends Device {
-    private byte sensors;
-    private byte op;
-
-    public EnvSensor (String name,long address) {
+    public EnvSensor(String name, long address) {
         super(name, address, (byte) 0x02);
-        super.setSerial(1);
+        if (super.getSerial() != 1) {
+            super.setSerial(1);
+        }
+    }
+    public byte getSensors() {
+        return super.getSensors();
+    }
+
+    public void setSensors(byte sensors) {
+        super.setSensors(sensors);
+    }
+
+    public byte getOp() {
+        return super.getOp();
+    }
+
+    public void setOp(byte op) {
+        super.setOp(op);
+    }
+
+    public int getCheckSum() {
+        return super.getCheckSum();
+    }
+
+    public void setCheckSum(int checkSum) {
+        super.setCheckSum(checkSum);
+    }
+
+    @Override
+    public long getLastDeviceAddress() {
+        return super.getLastDeviceAddress();
+    }
+
+    @Override
+    public void setLastDeviceAddress(long lastDeviceAddress) {
+        super.setLastDeviceAddress(lastDeviceAddress);
+    }
+
+    @Override
+    public String getName() {
+        return super.getName();
+    }
+
+    @Override
+    public long getSrc() {
+        return super.getSrc();
+    }
+
+    @Override
+    public long getSerial() {
+        return super.getSerial();
+    }
+
+    @Override
+    public void setSerial(long serial) {
+        super.setSerial(serial);
+    }
+
+    @Override
+    public long getTimestamp() {
+        return super.getTimestamp();
+    }
+
+    @Override
+    public void setTimestamp(long timestamp) {
+        super.setTimestamp(timestamp);
+    }
+
+    @Override
+    public byte getDev_type() {
+        return super.getDev_type();
     }
 }
 
 class Switch extends Device {
-    private byte state;
-    private List<String> devicesNames;
     public Switch (String name, long address) {
         super(name, address, (byte) 0x03);
-        devicesNames = new ArrayList<>();
+    }
+
+    @Override
+    public List<String> getDevicesNames() {
+        return super.getDevicesNames();
+    }
+
+    @Override
+    public int getCheckSum() {
+        return super.getCheckSum();
+    }
+
+    @Override
+    public void setCheckSum(int checkSum) {
+        super.setCheckSum(checkSum);
+    }
+
+    @Override
+    public long getLastDeviceAddress() {
+        return super.getLastDeviceAddress();
+    }
+
+    @Override
+    public void setLastDeviceAddress(long lastDeviceAddress) {
+        super.setLastDeviceAddress(lastDeviceAddress);
+    }
+
+    @Override
+    public String getName() {
+        return super.getName();
+    }
+
+    @Override
+    public long getSrc() {
+        return super.getSrc();
+    }
+
+    @Override
+    public long getSerial() {
+        return super.getSerial();
+    }
+
+    @Override
+    public void setSerial(long serial) {
+        super.setSerial(serial);
+    }
+
+    @Override
+    public byte getDev_type() {
+        return super.getDev_type();
+    }
+
+    @Override
+    public long getTimestamp() {
+        return super.getTimestamp();
+    }
+
+    @Override
+    public void setTimestamp(long timestamp) {
+        super.setTimestamp(timestamp);
+    }
+
+    @Override
+    public byte getState() {
+        return super.getState();
+    }
+
+    @Override
+    public void setState(byte state) {
+        super.setState(state);
     }
 }
 
 class Lamp extends Device {
-    private byte state;
     public Lamp(String name, long address) {
         super(name, address, (byte) 0x04);
     }
 
-    public void setState(byte state) {
-        this.state = state;
+    @Override
+    public int getCheckSum() {
+        return super.getCheckSum();
     }
 
+    @Override
+    public void setCheckSum(int checkSum) {
+        super.setCheckSum(checkSum);
+    }
+
+    @Override
+    public long getLastDeviceAddress() {
+        return super.getLastDeviceAddress();
+    }
+
+    @Override
+    public void setLastDeviceAddress(long lastDeviceAddress) {
+        super.setLastDeviceAddress(lastDeviceAddress);
+    }
+
+    @Override
+    public String getName() {
+        return super.getName();
+    }
+
+    @Override
+    public long getSrc() {
+        return super.getSrc();
+    }
+
+    @Override
+    public long getSerial() {
+        return super.getSerial();
+    }
+
+    @Override
+    public void setSerial(long serial) {
+        super.setSerial(serial);
+    }
+
+    @Override
+    public byte getDev_type() {
+        return super.getDev_type();
+    }
+
+    @Override
+    public long getTimestamp() {
+        return super.getTimestamp();
+    }
+
+    @Override
+    public void setTimestamp(long timestamp) {
+        super.setTimestamp(timestamp);
+    }
+
+    @Override
     public byte getState() {
-        return state;
+        return super.getState();
     }
 
-
+    @Override
+    public void setState(byte state) {
+        super.setState(state);
+    }
 }
 
 class Socket extends Device {
-    private byte state;
 
     public Socket (String name, long address) {
         super(name, address, (byte) 0x05);
     }
 
-    public void setState(byte state) {
-        this.state = state;
+    @Override
+    public int getCheckSum() {
+        return super.getCheckSum();
     }
 
+    @Override
+    public void setCheckSum(int checkSum) {
+        super.setCheckSum(checkSum);
+    }
+
+    @Override
+    public long getLastDeviceAddress() {
+        return super.getLastDeviceAddress();
+    }
+
+    @Override
+    public void setLastDeviceAddress(long lastDeviceAddress) {
+        super.setLastDeviceAddress(lastDeviceAddress);
+    }
+
+    @Override
+    public String getName() {
+        return super.getName();
+    }
+
+    @Override
+    public long getSrc() {
+        return super.getSrc();
+    }
+
+    @Override
+    public long getSerial() {
+        return super.getSerial();
+    }
+
+    @Override
+    public void setSerial(long serial) {
+        super.setSerial(serial);
+    }
+
+    @Override
+    public byte getDev_type() {
+        return super.getDev_type();
+    }
+
+    @Override
+    public long getTimestamp() {
+        return super.getTimestamp();
+    }
+
+    @Override
+    public void setTimestamp(long timestamp) {
+        super.setTimestamp(timestamp);
+    }
+
+    @Override
     public byte getState() {
-        return state;
+        return super.getState();
     }
 
-
-
+    @Override
+    public void setState(byte state) {
+        super.setState(state);
+    }
 }
+
 
 //class SmartHub {
 //    private final String name = "SmartHub";
@@ -411,17 +728,20 @@ class PacketEncoder {
     private boolean isValidCheckSum;
     private int packetCRC8;
 
+    private Hub hub;
+
     public PacketEncoder() {};
-    public PacketEncoder (String data) {
+    public PacketEncoder (String data, Hub hub) {
         this.stringData = data;
         byte[] temp = Base64.getUrlDecoder().decode(stringData.getBytes());
         bytes = new Integer[temp.length];
         for (int i = 0; i < temp.length; i++) {
             bytes[i] = temp[i] & 0x00ff;
         }
+        this.hub = hub;
     }
 
-    public void getDeviceType(int[] b) {
+    public void manageReceivedCommand(int[] b) {
         length = b[0];
         int packetOffset = 1;
         ULEB128Util.bytesCounter = 0;
@@ -458,11 +778,75 @@ class PacketEncoder {
 //
 //        }
         int cmd = b[packetOffset++];
+        int checkSum = b[b.length - 1];
+        if (dev_type == 6 && cmd == 6) {
+            long timestamp = ULEB128Util.decode(b, packetOffset++);
+            hub.setTimestamp(timestamp);
+        }
+        if (cmd == 2) {
+            // i am here
+            // сначала мы должны получить имя устройства и создать объект этого устройства в зависимости от имени
+            String name = getDeviceName(b, packetOffset);
+            if (name.toLowerCase().contains("switch")) {
+                if (!hub.contains(name)) {
+                    // массив строк - имена устройств, которые подключены
+                    // мне кажется если будет ситуация, когда выключатель поменет свою контрольную сумму, то можно просто пересоздать список всех устройств.
+                    Switch sw = new Switch(name, src);
+                    sw.initList(getSwitchListDevices(b, packetOffset));
+                    System.out.println(sw.getDevicesNames());
+                    hub.putNewDevice(sw);
+                }
+            }
+            else if (name.toLowerCase().contains("lamp")) {
+                if (!hub.contains(name)) {
+                    hub.putNewDevice(new Lamp(name, src));
+                }
+            }
+            else if (name.toLowerCase().contains("socket")) {
+                if (!hub.contains(name)) {
+                    hub.putNewDevice(new Socket(name, src));
+                }
+            }
+            else if (name.toLowerCase().contains("envsensor")) {
+                if (!hub.contains(name)) {
+                    //todo не все так просто
+                    hub.putNewDevice(new EnvSensor(name, src));
+                }
+            }
+        }
 //        System.out.println("src - " + src);
 //        System.out.println("dst - " + dst);
 //        System.out.println("serial - " + serial);
 //        System.out.println("dev_type - " + dev_type);
 //        System.out.println("cmd - " + cmd);
+    }
+
+    public List<String> getSwitchListDevices(int[] b, int packetOffset) {
+        List<String> list = new ArrayList<>();
+        int arrayLength = b[packetOffset++];
+        int counter = 0;
+        while (counter < arrayLength) {
+            int stringLength = b[packetOffset++];
+            counter++;
+            byte[] string = new byte[stringLength];
+            for (int i = 0; i < stringLength; i++) {
+                string[i] = (byte) b[packetOffset++];
+                counter++;
+            }
+            list.add(new String(string));
+        }
+        return list;
+    }
+
+    public String getDeviceName(int[] b, int packetOffset) {
+        int length = b[packetOffset++];
+        int copy = packetOffset;
+        byte[] deviceName = new byte[length];
+        for (int i = copy; i < copy + length; i++) {
+            deviceName[i - copy] = (byte) (b[i]);
+            packetOffset++;
+        }
+        return new String(deviceName);
     }
 
     public void parsePackets() {
@@ -482,7 +866,7 @@ class PacketEncoder {
             int crc8 = CheckSumUtil.computeCheckSum(checkSum);
             if (expectedSum == crc8) {
                 System.out.println("ok");
-                getDeviceType(b);
+//                manageReceivedCommand(b);
             }
         }
     }
