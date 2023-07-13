@@ -3,8 +3,9 @@ import java.net.*;
 import java.util.*;
 
 public class Main {
-    public static long byteCounter = 0;
     public static void main(String[] args) {
+        //todo доделать логику у EnvSensor
+        //todo timer
 //        String a = "DbMG_38BBgaI0Kv6kzGK";
 ////        System.out.println(Arrays.toString(b));
 //        PacketEncoder encoder = new PacketEncoder("DbMG_38BBgaI0Kv6kzGK");
@@ -74,16 +75,20 @@ public class Main {
             StringBuilder response = new StringBuilder();
 
             while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
+                response.append(inputLine.replaceAll("\\s++", ""));
             }
-            System.out.println(response.toString());
-            PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
-            requestBody = new StringBuilder(encoder.buildStringForServer());
-            System.out.println(requestBody);
 
-            // Print the response
-            System.out.println("Response: " + response.toString());
-            System.out.println(Arrays.toString(response.toString().getBytes()));
+            PacketEncoder encoder = new PacketEncoder();
+            if (encoder.base64IsCorrect(response.toString())) {
+                encoder.setHub(hub);
+                encoder.setStringData(response.toString());
+                requestBody = new StringBuilder(encoder.buildStringForServer());
+                System.out.println(requestBody);
+
+                // Print the response
+                System.out.println("Response: " + response.toString());
+                System.out.println(Arrays.toString(response.toString().getBytes()));
+            }
 
         }catch (IOException e) {
             System.exit(99);
@@ -121,9 +126,13 @@ public class Main {
                     StringBuilder response = new StringBuilder();
 
                     while ((inputLine = in.readLine()) != null) {
-                        response.append(inputLine);
+                        response.append(inputLine.replaceAll("\\s++", ""));
                     }
-                    PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
+
+                    PacketEncoder encoder = new PacketEncoder();
+                    if (encoder.base64IsCorrect(response.toString())) {
+                        encoder.setStringData(response.toString());
+                        encoder.setHub(hub);
 //                    PacketEncoder encoder = new PacketEncoder();
 //                    if (first) {
 //                        first = false;
@@ -132,8 +141,8 @@ public class Main {
 //                    else {
 //                        encoder = new PacketEncoder("DALwHQQCBAKlAdSOBos", hub);
 //                    }
-                    System.out.println("Response: " + response.toString());
-                    requestBody = new StringBuilder(encoder.buildStringForServer());
+                        System.out.println("Response: " + response.toString());
+                        requestBody = new StringBuilder(encoder.buildStringForServer());
 //                    StringBuilder s = new StringBuilder(requestBody);
 //                    if (requestBody.length() != 0) {
 //                        Files.write(
@@ -142,8 +151,9 @@ public class Main {
 //                                StandardOpenOption.APPEND
 //                        );
 //                    }
-                    // Print the response
-                    System.out.println(Arrays.toString(response.toString().getBytes()));
+                        // Print the response
+                        System.out.println(Arrays.toString(response.toString().getBytes()));
+                    }
                 }
                 catch (IOException e) {
                     System.exit(99);
@@ -1013,14 +1023,36 @@ class PacketEncoder {
     //todo время
 
     public PacketEncoder() {};
-    public PacketEncoder (String data, Hub hub) {
-        this.stringData = data;
-        byte[] temp = Base64.getUrlDecoder().decode(stringData.getBytes());
-        bytes = new Integer[temp.length];
-        for (int i = 0; i < temp.length; i++) {
-            bytes[i] = temp[i] & 0x00ff;
-        }
+    public String getStringData() {
+        return stringData;
+    }
+
+    public void setStringData(String stringData) {
+        this.stringData = stringData;
+    }
+
+    public Hub getHub() {
+        return hub;
+    }
+
+    public void setHub(Hub hub) {
         this.hub = hub;
+    }
+
+    public boolean base64IsCorrect(String data) {
+        boolean res = false;
+        try {
+            byte[] temp = Base64.getUrlDecoder().decode(data.getBytes());
+            bytes = new Integer[temp.length];
+            for (int i = 0; i < temp.length; i++) {
+                bytes[i] = temp[i] & 0x00ff;
+            }
+            res = true;
+        }
+        catch (IllegalArgumentException e) {
+            res = false;
+        }
+        return res;
     }
 
     public String manageReceivedCommand(int[] b) {
