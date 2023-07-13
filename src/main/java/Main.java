@@ -52,6 +52,7 @@ public class Main {
         int responseCode = 0;
         BufferedReader in;
         Hub hub = new Hub(ULEB128Util.decode(ULEB128Util.encode(Long.parseLong(args[1], 16)), 0));
+        System.out.println("hello - " + hub.executeIAMHERE());
         requestBody = hub.executeWHOISHERE();
         System.out.println(requestBody);
         try {
@@ -79,10 +80,10 @@ public class Main {
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine);
             }
-            PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
-            encoder.parsePackets();
-            System.out.println(hub.getTimestamp());
-
+            System.out.println(response.toString());
+            PacketEncoder encoder = new PacketEncoder("OAL_fwQCAghTRU5TT1IwMQ8EDGQGT1RIRVIxD7AJBk9USEVSMgCsjQYGT1RIRVIzCAAGT1RIRVI09w", hub);
+            requestBody = encoder.buildStringForServer();
+            System.out.println(requestBody);
 
             // Print the response
             System.out.println("Response: " + response.toString());
@@ -91,55 +92,50 @@ public class Main {
         }catch (IOException e) {
             System.exit(99);
         }
-        if (responseCode != 200 && responseCode != 204) {
-            System.exit(99);
-        }
-        else if (responseCode == 204) {
-            System.exit(0);
-        }
-        else if (responseCode == 200) {
-            while (responseCode != 204) {
-                try {
-                    url = new URL(args[0]);
-                    conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-
-                    // Enable output and input streams for writing and reading data
-                    conn.setDoOutput(true);
-                    conn.setDoInput(true);
-                    wr = new DataOutputStream(conn.getOutputStream());
-                    wr.writeBytes(requestBody);
-                    wr.flush();
-
-                    // Get the response code
-                    responseCode = conn.getResponseCode();
-                    System.out.println("Response Code: " + responseCode);
-
-                    // Read the response from the server
-                    in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    String inputLine;
-                    StringBuilder response = new StringBuilder();
-
-                    while ((inputLine = in.readLine()) != null) {
-                        response.append(inputLine);
-                    }
-                    PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
-                    encoder.parsePackets();
-                    // Print the response
-                    Files.write(
-                            Paths.get("/home/kalin/IdeaProjects/TinkoffSmartHome/src/main/java/wtf.txt"),
-                            response.append("\n").toString().getBytes(),
-                            StandardOpenOption.APPEND
-                    );
-                    System.out.println("Response: " + response.toString());
-                    System.out.println(Arrays.toString(response.toString().getBytes()));
-                }
-                catch (IOException e) {
-                    System.exit(99);
-                }
-            }
-        }
+//        if (responseCode != 200 && responseCode != 204) {
+//            System.exit(99);
+//        }
+//        else if (responseCode == 204) {
+//            System.exit(0);
+//        }
+//        else if (responseCode == 200) {
+//            while (responseCode != 204) {
+//                try {
+//                    url = new URL(args[0]);
+//                    conn = (HttpURLConnection) url.openConnection();
+//                    conn.setRequestMethod("POST");
+//                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+//
+//                    // Enable output and input streams for writing and reading data
+//                    conn.setDoOutput(true);
+//                    conn.setDoInput(true);
+//                    wr = new DataOutputStream(conn.getOutputStream());
+//                    wr.writeBytes(requestBody);
+//                    wr.flush();
+//
+//                    // Get the response code
+//                    responseCode = conn.getResponseCode();
+//                    System.out.println("Response Code: " + responseCode);
+//
+//                    // Read the response from the server
+//                    in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+//                    String inputLine;
+//                    StringBuilder response = new StringBuilder();
+//
+//                    while ((inputLine = in.readLine()) != null) {
+//                        response.append(inputLine);
+//                    }
+//                    PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
+//                    requestBody = encoder.buildStringForServer();
+//                    // Print the response
+//                    System.out.println("Response: " + response.toString());
+//                    System.out.println(Arrays.toString(response.toString().getBytes()));
+//                }
+//                catch (IOException e) {
+//                    System.exit(99);
+//                }
+//            }
+//        }
 
 //        try {
 //            // Create URL object
@@ -185,6 +181,42 @@ public class Main {
     }
 }
 
+class Trigger {
+    private byte op;
+    private long value;
+    private String name;
+
+    public Trigger(byte op, long value, String name) {
+        this.op = op;
+        this.value = value;
+        this.name = name;
+    }
+
+    public byte getOp() {
+        return op;
+    }
+
+    public void setOp(byte op) {
+        this.op = op;
+    }
+
+    public long getValue() {
+        return value;
+    }
+
+    public void setValue(long value) {
+        this.value = value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
 abstract class Device {
     private final String name;
     private final long src;
@@ -193,6 +225,8 @@ abstract class Device {
     private long lastDeviceAddress;
     private long timestamp;
     private int checkSum;
+
+    private final int broadcastAddress = 16383;
 
     // EnvSensor
     private byte sensors;
@@ -215,6 +249,10 @@ abstract class Device {
             this.devicesNames = new ArrayList<>();
         }
         return this.devicesNames;
+    }
+
+    public int getBroadcastAddress() {
+        return broadcastAddress;
     }
 
     public void add(String name) {
@@ -298,7 +336,7 @@ abstract class Device {
 class Hub extends Device {
     private Map<String, Device> nameDevice;
     public Hub (long address) {
-        super("SmartHub", address, (byte) 0x01);
+        super("HUB01", address, (byte) 0x01);
         super.setSerial(1);
         nameDevice = new HashMap<>();
     }
@@ -315,15 +353,15 @@ class Hub extends Device {
         return nameDevice.containsKey(deviceName);
     }
 
-    public String executeWHOISHERE() {
-        String ans = "";
+    public String executeIAMHERE() {
+        StringBuilder ans = new StringBuilder();
         String name = super.getName();
         List<Integer> list = new ArrayList<>();
         int[] src = ULEB128Util.encode(super.getSrc());
         for (int s : src) {
             list.add((int) s);
         }
-        int[] dst = ULEB128Util.encode(16383);
+        int[] dst = ULEB128Util.encode(super.getBroadcastAddress());
         for (int s : dst) {
             list.add((int) s);
         }
@@ -334,7 +372,7 @@ class Hub extends Device {
         }
         int dev_type = super.getDev_type();
         list.add((int) dev_type);
-        int cmd = 1;
+        int cmd = Commands.IAMHERE.getCommandNum();
         list.add(cmd);
         byte[] cmd_body = new byte[1 + name.length()];
         byte[] bytes = name.getBytes();
@@ -358,21 +396,75 @@ class Hub extends Device {
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
             }
-            ans = new String(Base64.getUrlEncoder().withoutPadding().encode(x));
+            ans.append(new String(Base64.getUrlEncoder().withoutPadding().encode(x)));
         }
-        return ans;
+        return ans.toString();
+    }
+
+    public String executeWHOISHERE() {
+        StringBuilder ans = new StringBuilder();
+        String name = super.getName();
+        List<Integer> list = new ArrayList<>();
+        int[] src = ULEB128Util.encode(super.getSrc());
+        for (int s : src) {
+            list.add((int) s);
+        }
+        int[] dst = ULEB128Util.encode(super.getBroadcastAddress());
+        for (int s : dst) {
+            list.add((int) s);
+        }
+        int[] serial = ULEB128Util.encode(super.getSerial());
+        super.setSerial(super.getSerial() + 1);
+        for (int s : serial) {
+            list.add((int) s);
+        }
+        int dev_type = super.getDev_type();
+        list.add((int) dev_type);
+        int cmd = Commands.WHOISHERE.getCommandNum();
+        list.add(cmd);
+        byte[] cmd_body = new byte[1 + name.length()];
+        byte[] bytes = name.getBytes();
+        cmd_body[0] = (byte) name.length();
+        list.add(name.length());
+        for (int i = 1; i < cmd_body.length; i++) {
+            cmd_body[i] = bytes[i - 1];
+            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
+            list.add((int) bytes[i - 1]);
+        }
+        int[] payload = list.stream().mapToInt(i -> i).toArray();
+        int checkSum = CheckSumUtil.computeCheckSum(payload);
+        if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
+            list.add(0, list.size());
+            list.add(checkSum);
+            System.out.println();
+            System.out.println("checksum " + Integer.toHexString(checkSum));
+            System.out.println();
+            System.out.println(list);
+            byte[] x = new byte[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                x[i] = (byte) (list.get(i) & 0x00ff);
+            }
+            ans.append(new String(Base64.getUrlEncoder().withoutPadding().encode(x)));
+        }
+        return ans.toString();
     }
 
 
 }
 
 class EnvSensor extends Device {
+    private List<Trigger> list;
     public EnvSensor(String name, long address) {
         super(name, address, (byte) 0x02);
         if (super.getSerial() != 1) {
             super.setSerial(1);
         }
     }
+
+    public void setList(List<Trigger> list) {
+        this.list = list;
+    }
+
     public byte getSensors() {
         return super.getSensors();
     }
@@ -720,6 +812,32 @@ class Socket extends Device {
 //
 //}
 
+enum Devices {
+    SMARTHUB,
+    ENVSENSOR,
+    SWITCH,
+    LAMP,
+    SOCKET,
+    CLOCK;
+
+    public int getDeviceNum() {
+        return ordinal() + 1;
+    }
+}
+
+enum Commands {
+    WHOISHERE,
+    IAMHERE,
+    GETSTATUS,
+    STATUS,
+    SETSTATUS,
+    TICK;
+
+    public int getCommandNum() {
+        return ordinal() + 1;
+    }
+}
+
 class PacketEncoder {
     private String stringData;
     private Integer[] bytes;
@@ -729,6 +847,10 @@ class PacketEncoder {
     private int packetCRC8;
 
     private Hub hub;
+
+    private int packetOffset = 1;
+
+    //todo время
 
     public PacketEncoder() {};
     public PacketEncoder (String data, Hub hub) {
@@ -741,9 +863,10 @@ class PacketEncoder {
         this.hub = hub;
     }
 
-    public void manageReceivedCommand(int[] b) {
+    public String manageReceivedCommand(int[] b) {
+        StringBuilder ans = new StringBuilder();
         length = b[0];
-        int packetOffset = 1;
+        packetOffset = 1;
         ULEB128Util.bytesCounter = 0;
         long src = ULEB128Util.decode(b, packetOffset);
         packetOffset += ULEB128Util.bytesCounter;
@@ -752,6 +875,7 @@ class PacketEncoder {
         packetOffset += ULEB128Util.bytesCounter;
         ULEB128Util.bytesCounter = 0;
         long serial = ULEB128Util.decode(b, packetOffset++);
+        ULEB128Util.bytesCounter = 0;
         int dev_type = b[packetOffset++];
         System.out.println(dev_type);
 //        try {
@@ -779,39 +903,58 @@ class PacketEncoder {
 //        }
         int cmd = b[packetOffset++];
         int checkSum = b[b.length - 1];
-        if (dev_type == 6 && cmd == 6) {
+        if (dev_type == Devices.CLOCK.getDeviceNum() && cmd == Commands.TICK.getCommandNum()) {
             long timestamp = ULEB128Util.decode(b, packetOffset++);
+            ULEB128Util.bytesCounter = 0;
             hub.setTimestamp(timestamp);
         }
-        if (cmd == 2) {
+        else if (cmd == Commands.WHOISHERE.getCommandNum()) {
+            // отправить i am here хаба
+            ans.append(hub.executeIAMHERE());
+        }
+        else if (cmd == Commands.IAMHERE.getCommandNum()) {
             // i am here
             // сначала мы должны получить имя устройства и создать объект этого устройства в зависимости от имени
-            String name = getDeviceName(b, packetOffset);
-            if (name.toLowerCase().contains("switch")) {
+            String name = getDeviceName(b);
+            if (dev_type == Devices.SWITCH.getDeviceNum()) {
                 if (!hub.contains(name)) {
-                    // массив строк - имена устройств, которые подключены
-                    // мне кажется если будет ситуация, когда выключатель поменет свою контрольную сумму, то можно просто пересоздать список всех устройств.
                     Switch sw = new Switch(name, src);
-                    sw.initList(getSwitchListDevices(b, packetOffset));
+                    sw.initList(getSwitchListDevices(b));
                     System.out.println(sw.getDevicesNames());
                     hub.putNewDevice(sw);
                 }
             }
-            else if (name.toLowerCase().contains("lamp")) {
+            else if (dev_type == Devices.LAMP.getDeviceNum()) {
                 if (!hub.contains(name)) {
                     hub.putNewDevice(new Lamp(name, src));
                 }
             }
-            else if (name.toLowerCase().contains("socket")) {
+            else if (dev_type == Devices.SOCKET.getDeviceNum()) {
                 if (!hub.contains(name)) {
                     hub.putNewDevice(new Socket(name, src));
                 }
             }
-            else if (name.toLowerCase().contains("envsensor")) {
+            else if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
                 if (!hub.contains(name)) {
-                    //todo не все так просто
-                    hub.putNewDevice(new EnvSensor(name, src));
+                    EnvSensor envSensor = new EnvSensor(name, src);
+                    envSensor.setSensors(getSensors(b));
+                    envSensor.setList(getTriggers(b));
+
                 }
+            }
+        }
+        else if (cmd == Commands.STATUS.getCommandNum()) {
+            if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
+
+            }
+            else if (dev_type == Devices.SWITCH.getDeviceNum()) {
+
+            }
+            else if (dev_type == Devices.LAMP.getDeviceNum()) {
+
+            }
+            else if (dev_type == Devices.SOCKET.getDeviceNum()) {
+
             }
         }
 //        System.out.println("src - " + src);
@@ -819,26 +962,49 @@ class PacketEncoder {
 //        System.out.println("serial - " + serial);
 //        System.out.println("dev_type - " + dev_type);
 //        System.out.println("cmd - " + cmd);
+        return ans.isEmpty() ? "" : ans.toString();
     }
 
-    public List<String> getSwitchListDevices(int[] b, int packetOffset) {
+    public List<String> getSwitchListDevices(int[] b) {
         List<String> list = new ArrayList<>();
         int arrayLength = b[packetOffset++];
         int counter = 0;
         while (counter < arrayLength) {
             int stringLength = b[packetOffset++];
-            counter++;
             byte[] string = new byte[stringLength];
             for (int i = 0; i < stringLength; i++) {
                 string[i] = (byte) b[packetOffset++];
-                counter++;
             }
             list.add(new String(string));
+            counter++;
         }
         return list;
     }
 
-    public String getDeviceName(int[] b, int packetOffset) {
+    public byte getSensors(int[] b) {
+        return (byte) b[packetOffset++];
+    }
+
+    public List<Trigger> getTriggers(int[] b) {
+        ULEB128Util.bytesCounter = 0;
+        List<Trigger> list = new ArrayList<>();
+        int length = b[packetOffset++];
+        int counter = 0;
+        while (counter < length) {
+            byte op = (byte) b[packetOffset++];
+            long value = ULEB128Util.decode(b, packetOffset);
+            packetOffset += ULEB128Util.bytesCounter;
+            ULEB128Util.bytesCounter = 0;
+            String name = getDeviceName(b);
+            Trigger trigger = new Trigger(op, value, name);
+            list.add(trigger);
+            counter++;
+
+        }
+        return list;
+    }
+
+    public String getDeviceName(int[] b) {
         int length = b[packetOffset++];
         int copy = packetOffset;
         byte[] deviceName = new byte[length];
@@ -849,8 +1015,9 @@ class PacketEncoder {
         return new String(deviceName);
     }
 
-    public void parsePackets() {
+    public String buildStringForServer() {
         int counter = 0;
+        StringBuilder ans = new StringBuilder();
         while (counter < bytes.length) {
             int length = bytes[counter];
             int[] b = new int[length + 2];
@@ -866,9 +1033,13 @@ class PacketEncoder {
             int crc8 = CheckSumUtil.computeCheckSum(checkSum);
             if (expectedSum == crc8) {
                 System.out.println("ok");
-//                manageReceivedCommand(b);
+                String string = manageReceivedCommand(b);
+                if (string.length() != 0) {
+                    ans.append(string);
+                }
             }
         }
+        return ans.toString();
     }
 
     public void getBytes() {
