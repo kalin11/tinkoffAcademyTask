@@ -754,64 +754,6 @@ class Socket extends Device {
     }
 }
 
-
-//class SmartHub {
-//    private final String name = "SmartHub";
-//
-//    public void buildCmd() {
-//        List<Integer> list = new ArrayList<>();
-//        int length = 2;
-//        Integer[] src = ULEB128Util.encode(819);
-//        for (int s : src) {
-//            list.add((int) s);
-//        }
-//        length += src.length;
-//        Integer[] dst = ULEB128Util.encode(16383);
-//        for (int s : dst) {
-//            list.add((int) s);
-//        }
-//        length += dst.length;
-//        Integer[] serial = ULEB128Util.encode(1);
-//        for (int s : serial) {
-//            list.add((int) s);
-//        }
-//        length += serial.length;
-//        int dev_type = 1;
-//        list.add((int) dev_type);
-//        length += 1;
-//        int cmd = 1;
-//        list.add((int) cmd);
-//        length += 1;
-//        byte[] cmd_body = new byte[1 + name.length()];
-//        byte[] bytes = name.getBytes();
-//        cmd_body[0] = (byte) name.length();
-//        list.add(name.length());
-//        for (int i = 1; i < cmd_body.length; i++) {
-//            cmd_body[i] = bytes[i - 1];
-//            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
-//            list.add((int) bytes[i - 1]);
-//        }
-//        length += 1 + name.length();
-//        Integer[] payload = list.toArray(new Integer[0]);
-//        int checkSum = CheckSumUtil.computeCheckSum(payload);
-//        if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
-//            list.add(0, list.size());
-//            list.add(checkSum);
-//            System.out.println();
-//            System.out.println("checksum " + Integer.toHexString(checkSum));
-//            System.out.println();
-//            System.out.println(list);
-//            byte[] x = new byte[list.size()];
-//            for (int i = 0; i < list.size(); i++) {
-//                x[i] = (byte) (list.get(i) & 0xff);
-//            }
-//            System.out.println(new String(Base64.getUrlEncoder().withoutPadding().encode(x)));
-//        }
-//
-//    }
-//
-//}
-
 enum Devices {
     SMARTHUB,
     ENVSENSOR,
@@ -878,29 +820,6 @@ class PacketEncoder {
         ULEB128Util.bytesCounter = 0;
         int dev_type = b[packetOffset++];
         System.out.println(dev_type);
-//        try {
-//            if (dev_type == 3 || dev_type == 4) {
-//                byte data[] = String.valueOf(dev_type).getBytes();
-//                Path file = Paths.get("/home/kalin/IdeaProjects/TinkoffSmartHome/src/main/java/wtf.txt");
-//                Files.write(
-//                        Paths.get("/home/kalin/IdeaProjects/TinkoffSmartHome/src/main/java/wtf.txt"),
-//                        String.valueOf(dev_type + "\n").getBytes(),
-//                        StandardOpenOption.APPEND
-//                );
-//
-//            }
-//            else {
-//                byte data[] = String.valueOf(dev_type).getBytes();
-//                Path file = Paths.get("/home/kalin/IdeaProjects/TinkoffSmartHome/src/main/java/wtf.txt");
-//                Files.write(
-//                        Paths.get("/home/kalin/IdeaProjects/TinkoffSmartHome/src/main/java/wtf.txt"),
-//                        "Timer\n".getBytes(),
-//                        StandardOpenOption.APPEND
-//                );
-//            }
-//        }catch (IOException e) {
-//
-//        }
         int cmd = b[packetOffset++];
         int checkSum = b[b.length - 1];
         if (dev_type == Devices.CLOCK.getDeviceNum() && cmd == Commands.TICK.getCommandNum()) {
@@ -1041,108 +960,6 @@ class PacketEncoder {
         }
         return ans.toString();
     }
-
-    public void getBytes() {
-        System.out.println(Arrays.toString(bytes));
-    }
-
-    public void fillCRC() {
-        int[] payload = new int[bytes.length - 2];
-        System.arraycopy(bytes, 1, payload, 0, bytes.length - 2);
-        int packetCRC8 = bytes[bytes.length - 1];
-        int expectedCRC8 = CheckSumUtil.computeCheckSum(payload);
-        isValidCheckSum = (packetCRC8 == expectedCRC8);
-    }
-
-    public void fillPayload() {
-
-    }
-
-    public void setData(String data) {
-        this.stringData = data;
-    }
-
-    public String getData() {
-        return stringData;
-    }
-
-    public int getLength() {
-        if (length == 0) {
-            length = bytes[0];
-        }
-        return length;
-    }
-
-    public int getPacketCRC8() {
-        return packetCRC8;
-    }
-
-    public boolean isValidCheckSum() {
-        return isValidCheckSum;
-    }
-}
-// пытаемся ответить на комманду
-class ReceivedCmdHandler {
-    private static final byte SMART_HUB = 0x01;
-    private static final byte ENV_SENSOR = 0x02;
-    private static final byte SWITCH = 0x03;
-    private static final byte LAMP = 0x04;
-    private static final byte SOCKET = 0x05;
-    private static final byte CLOCK = 0x06;
-    private static final byte WHO_IS_HERE = 0x01;
-    private static final byte I_AM_HERE = 0x02;
-    private static final byte GET_STATUS = 0x03;
-    private static final byte STATUS = 0x04;
-    private static final byte SET_STATUS = 0x05;
-    private static final byte TICK = 0x06;
-
-    private long serial = 1L;
-    public static void getCmdBody(byte devType, byte cmd) {
-        switch (devType) {
-            case ENV_SENSOR -> {
-                switch (cmd) {
-                    case WHO_IS_HERE -> {
-                        // length - получим
-                        // src - аргумент командной строки
-                        // dst - 16383 aka 0x3FFF
-                        // serial = serial++;
-                        // dev_type - с константы взять
-                        // cmd - I AM HERE
-                        // cmd_body - string hub name, dev_props empty
-                        // crc8 контрольная сумма пакета
-                        break;
-                    }
-                    case I_AM_HERE -> {
-                        // как-то запомнить соседей
-                        // информация о устройстве в dev_props
-                        break;
-                    }
-                    case STATUS -> {
-                        // как-то запомнить статусы устройств
-                        break;
-                    }
-                }
-                break;
-            }
-            case SWITCH -> {
-                break;
-            }
-            case LAMP -> {
-                break;
-            }
-            case SOCKET -> {
-                break;
-            }
-            case CLOCK -> {
-                break;
-            }
-
-        }
-    }
-}
-
-class CmdSender {
-
 }
 
 class ULEB128Util {
