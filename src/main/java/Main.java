@@ -1,10 +1,5 @@
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class Main {
@@ -45,7 +40,7 @@ public class Main {
 //        hub.putNewDevice(new Lamp("LAMP01", 3));
 
         // String url = args[0];  // URL of the server endpoint
-        String requestBody = ""; // Request body parameters
+        StringBuilder requestBody = new StringBuilder(); // Request body parameters
         URL url;
         HttpURLConnection conn;
         DataOutputStream wr;
@@ -53,8 +48,9 @@ public class Main {
         BufferedReader in;
         Hub hub = new Hub(ULEB128Util.decode(ULEB128Util.encode(Long.parseLong(args[1], 16)), 0));
         System.out.println("hello - " + hub.executeIAMHERE());
-        requestBody = hub.executeWHOISHERE();
+        requestBody = new StringBuilder(hub.executeWHOISHERE());
         System.out.println(requestBody);
+        boolean first = true;
         try {
             url = new URL(args[0]);
             conn = (HttpURLConnection) url.openConnection();
@@ -65,7 +61,7 @@ public class Main {
             conn.setDoOutput(true);
             conn.setDoInput(true);
             wr = new DataOutputStream(conn.getOutputStream());
-            wr.writeBytes(requestBody);
+            wr.writeBytes(requestBody.toString());
             wr.flush();
 
             // Get the response code
@@ -81,8 +77,8 @@ public class Main {
                 response.append(inputLine);
             }
             System.out.println(response.toString());
-            PacketEncoder encoder = new PacketEncoder("OAL_fwQCAghTRU5TT1IwMQ8EDGQGT1RIRVIxD7AJBk9USEVSMgCsjQYGT1RIRVIzCAAGT1RIRVI09w", hub);
-            requestBody = encoder.buildStringForServer();
+            PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
+            requestBody = new StringBuilder(encoder.buildStringForServer());
             System.out.println(requestBody);
 
             // Print the response
@@ -92,50 +88,68 @@ public class Main {
         }catch (IOException e) {
             System.exit(99);
         }
-//        if (responseCode != 200 && responseCode != 204) {
-//            System.exit(99);
-//        }
-//        else if (responseCode == 204) {
-//            System.exit(0);
-//        }
-//        else if (responseCode == 200) {
-//            while (responseCode != 204) {
-//                try {
-//                    url = new URL(args[0]);
-//                    conn = (HttpURLConnection) url.openConnection();
-//                    conn.setRequestMethod("POST");
-//                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-//
-//                    // Enable output and input streams for writing and reading data
-//                    conn.setDoOutput(true);
-//                    conn.setDoInput(true);
-//                    wr = new DataOutputStream(conn.getOutputStream());
-//                    wr.writeBytes(requestBody);
-//                    wr.flush();
-//
-//                    // Get the response code
-//                    responseCode = conn.getResponseCode();
-//                    System.out.println("Response Code: " + responseCode);
-//
-//                    // Read the response from the server
-//                    in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-//                    String inputLine;
-//                    StringBuilder response = new StringBuilder();
-//
-//                    while ((inputLine = in.readLine()) != null) {
-//                        response.append(inputLine);
+        if (responseCode != 200 && responseCode != 204) {
+            System.exit(99);
+        }
+        else if (responseCode == 204) {
+            System.exit(0);
+        }
+        else if (responseCode == 200) {
+            while (responseCode != 204) {
+                try {
+                    url = new URL(args[0]);
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                    // Enable output and input streams for writing and reading data
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+                    wr = new DataOutputStream(conn.getOutputStream());
+                    if (requestBody.length() != 0) {
+                        wr.writeBytes(requestBody.toString());
+                        wr.flush();
+                    }
+
+                    // Get the response code
+                    responseCode = conn.getResponseCode();
+                    System.out.println("Response Code: " + responseCode);
+
+                    // Read the response from the server
+                    in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
+//                    PacketEncoder encoder = new PacketEncoder();
+//                    if (first) {
+//                        first = false;
+//                        encoder = new PacketEncoder("JALwHQQCAghTRU5TT1IwMQMCDGQGTEFNUDAyD7AJBkxBTVAwM3A",hub);
 //                    }
-//                    PacketEncoder encoder = new PacketEncoder(response.toString(), hub);
-//                    requestBody = encoder.buildStringForServer();
-//                    // Print the response
-//                    System.out.println("Response: " + response.toString());
-//                    System.out.println(Arrays.toString(response.toString().getBytes()));
-//                }
-//                catch (IOException e) {
-//                    System.exit(99);
-//                }
-//            }
-//        }
+//                    else {
+//                        encoder = new PacketEncoder("DALwHQQCBAKlAdSOBos", hub);
+//                    }
+                    System.out.println("Response: " + response.toString());
+                    requestBody = new StringBuilder(encoder.buildStringForServer());
+//                    StringBuilder s = new StringBuilder(requestBody);
+//                    if (requestBody.length() != 0) {
+//                        Files.write(
+//                                Paths.get("/home/kalin/IdeaProjects/TinkoffSmartHome/src/main/java/testing.txt"),
+//                                s.append("\n").append(response).append("\n").toString().getBytes(),
+//                                StandardOpenOption.APPEND
+//                        );
+//                    }
+                    // Print the response
+                    System.out.println(Arrays.toString(response.toString().getBytes()));
+                }
+                catch (IOException e) {
+                    System.exit(99);
+                }
+            }
+        }
 
 //        try {
 //            // Create URL object
@@ -182,17 +196,17 @@ public class Main {
 }
 
 class Trigger {
-    private byte op;
+    private int op;
     private long value;
     private String name;
 
-    public Trigger(byte op, long value, String name) {
+    public Trigger(int op, long value, String name) {
         this.op = op;
         this.value = value;
         this.name = name;
     }
 
-    public byte getOp() {
+    public int getOp() {
         return op;
     }
 
@@ -229,8 +243,18 @@ abstract class Device {
     private final int broadcastAddress = 16383;
 
     // EnvSensor
-    private byte sensors;
-    private byte op;
+    private int sensors;
+    private int op;
+    private List<Trigger> list;
+    private boolean hasTempDevice;
+    private boolean hasWaterDevice;
+    private boolean hasLuxDevice;
+    private boolean hasAirDevice;
+
+    private long tempBound;
+    private long waterBound;
+    private long luxBound;
+    private long airBound;
 
     // Socket && Lamp && Switch
     private byte state;
@@ -244,11 +268,87 @@ abstract class Device {
         this.dev_type = dev_type;
     }
 
+    public long getTempBound() {
+        return tempBound;
+    }
+
+    public void setTempBound(long tempBound) {
+        this.tempBound = tempBound;
+    }
+
+    public long getWaterBound() {
+        return waterBound;
+    }
+
+    public void setWaterBound(long waterBound) {
+        this.waterBound = waterBound;
+    }
+
+    public long getLuxBound() {
+        return luxBound;
+    }
+
+    public void setLuxBound(long luxBound) {
+        this.luxBound = luxBound;
+    }
+
+    public long getAirBound() {
+        return airBound;
+    }
+
+    public void setAirBound(long airBound) {
+        this.airBound = airBound;
+    }
+
+    public List<Trigger> getList() {
+        return list;
+    }
+
+    public void setList(List<Trigger> list) {
+        this.list = list;
+    }
+
+    public void setDevicesNames(List<String> devicesNames) {
+        this.devicesNames = devicesNames;
+    }
+
     public List<String> getDevicesNames() {
         if (this.devicesNames == null) {
             this.devicesNames = new ArrayList<>();
         }
         return this.devicesNames;
+    }
+
+    public boolean isHasTempDevice() {
+        return hasTempDevice;
+    }
+
+    public void setHasTempDevice(boolean hasTempDevice) {
+        this.hasTempDevice = hasTempDevice;
+    }
+
+    public boolean isHasWaterDevice() {
+        return hasWaterDevice;
+    }
+
+    public void setHasWaterDevice(boolean hasWaterDevice) {
+        this.hasWaterDevice = hasWaterDevice;
+    }
+
+    public boolean isHasLuxDevice() {
+        return hasLuxDevice;
+    }
+
+    public void setHasLuxDevice(boolean hasLuxDevice) {
+        this.hasLuxDevice = hasLuxDevice;
+    }
+
+    public boolean isHasAirDevice() {
+        return hasAirDevice;
+    }
+
+    public void setHasAirDevice(boolean hasAirDevice) {
+        this.hasAirDevice = hasAirDevice;
     }
 
     public int getBroadcastAddress() {
@@ -308,15 +408,15 @@ abstract class Device {
         this.timestamp = timestamp;
     }
 
-    public byte getSensors() {
+    public int getSensors() {
         return sensors;
     }
 
-    public void setSensors(byte sensors) {
+    public void setSensors(int sensors) {
         this.sensors = sensors;
     }
 
-    public byte getOp() {
+    public int getOp() {
         return op;
     }
 
@@ -334,24 +434,47 @@ abstract class Device {
 }
 
 class Hub extends Device {
+    private Map<Long, Device> srcDevice;
     private Map<String, Device> nameDevice;
     public Hub (long address) {
         super("HUB01", address, (byte) 0x01);
         super.setSerial(1);
+        srcDevice = new HashMap<>();
         nameDevice = new HashMap<>();
     }
 
-    public void putNewDevice(Device device) {
+    public Map<String, Device> getNameDevice() {
+        return this.nameDevice;
+    }
+
+    public Map<Long, Device> getSrcDevice() {
+        return this.srcDevice;
+    }
+
+    public void putNewDeviceBySrc(Device device) {
+        srcDevice.put(device.getSrc(), device);
+    }
+
+    public void putNewDeviceByName(Device device){
         nameDevice.put(device.getName(), device);
+    }
+
+    public Device getDevice(Long src) {
+        return srcDevice.get(src);
     }
 
     public Device getDevice(String name) {
         return nameDevice.get(name);
     }
 
-    public boolean contains(String deviceName) {
-        return nameDevice.containsKey(deviceName);
+    public boolean contains(Long src) {
+        return srcDevice.containsKey(src);
     }
+
+    public boolean contains(String name) {
+        return nameDevice.containsKey(name);
+    }
+
 
     public String executeIAMHERE() {
         StringBuilder ans = new StringBuilder();
@@ -449,31 +572,126 @@ class Hub extends Device {
         return ans.toString();
     }
 
+    public String executeSETSTATUS(long dstValue, int state) {
+        StringBuilder ans = new StringBuilder();
+        String name = super.getName();
+        List<Integer> list = new ArrayList<>();
+        int[] src = ULEB128Util.encode(super.getSrc());
+        for (int s : src) {
+            list.add((int) s);
+        }
+        int[] dst = ULEB128Util.encode(dstValue);
+        for (int s : dst) {
+            list.add((int) s);
+        }
+        int[] serial = ULEB128Util.encode(super.getSerial());
+        super.setSerial(super.getSerial() + 1);
+        for (int s : serial) {
+            list.add((int) s);
+        }
+        int dev_type = super.getDev_type();
+        list.add((int) dev_type);
+        int cmd = Commands.SETSTATUS.getCommandNum();
+        list.add(cmd);
+        list.add(state);
+//        byte[] cmd_body = new byte[1 + name.length()];
+//        byte[] bytes = name.getBytes();
+//        cmd_body[0] = (byte) name.length();
+//        list.add(name.length());
+//        for (int i = 1; i < cmd_body.length; i++) {
+//            cmd_body[i] = bytes[i - 1];
+//            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
+//            list.add((int) bytes[i - 1]);
+//        }
+        int[] payload = list.stream().mapToInt(i -> i).toArray();
+        int checkSum = CheckSumUtil.computeCheckSum(payload);
+        if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
+            list.add(0, list.size());
+            list.add(checkSum);
+            System.out.println();
+            System.out.println("checksum " + Integer.toHexString(checkSum));
+            System.out.println();
+            System.out.println(list);
+            byte[] x = new byte[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                x[i] = (byte) (list.get(i) & 0x00ff);
+            }
+            ans.append(new String(Base64.getUrlEncoder().withoutPadding().encode(x)));
+        }
+        return ans.toString();
+    }
+
 
 }
 
 class EnvSensor extends Device {
-    private List<Trigger> list;
     public EnvSensor(String name, long address) {
         super(name, address, (byte) 0x02);
         if (super.getSerial() != 1) {
             super.setSerial(1);
         }
+        super.setList(new ArrayList<>());
     }
 
+    @Override
+    public List<Trigger> getList() {
+        return super.getList();
+    }
+
+    @Override
     public void setList(List<Trigger> list) {
-        this.list = list;
+        super.setList(list);
     }
 
-    public byte getSensors() {
+    @Override
+    public boolean isHasTempDevice() {
+        return super.isHasTempDevice();
+    }
+
+    @Override
+    public void setHasTempDevice(boolean hasTempDevice) {
+        super.setHasTempDevice(hasTempDevice);
+    }
+
+    @Override
+    public boolean isHasWaterDevice() {
+        return super.isHasWaterDevice();
+    }
+
+    @Override
+    public void setHasWaterDevice(boolean hasWaterDevice) {
+        super.setHasWaterDevice(hasWaterDevice);
+    }
+
+    @Override
+    public boolean isHasLuxDevice() {
+        return super.isHasLuxDevice();
+    }
+
+    @Override
+    public void setHasLuxDevice(boolean hasLuxDevice) {
+        super.setHasLuxDevice(hasLuxDevice);
+    }
+
+    @Override
+    public boolean isHasAirDevice() {
+        return super.isHasAirDevice();
+    }
+
+    @Override
+    public void setHasAirDevice(boolean hasAirDevice) {
+        super.setHasAirDevice(hasAirDevice);
+    }
+
+    public int getSensors() {
         return super.getSensors();
     }
 
-    public void setSensors(byte sensors) {
+    public void setSensors(int sensors) {
         super.setSensors(sensors);
     }
 
-    public byte getOp() {
+    public int getOp() {
         return super.getOp();
     }
 
@@ -828,6 +1046,44 @@ class PacketEncoder {
             hub.setTimestamp(timestamp);
         }
         else if (cmd == Commands.WHOISHERE.getCommandNum()) {
+            String name = getDeviceName(b);
+            if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
+                EnvSensor envSensor = new EnvSensor(name, src);
+                int sensors = getSensors(b);
+                envSensor.setSensors(sensors);
+                envSensor.setHasTempDevice((sensors & (1 << 0)) != 0);
+                envSensor.setHasWaterDevice((sensors & (1 << 1)) != 0);
+                envSensor.setHasLuxDevice((sensors & (1 << 3)) != 0);
+                envSensor.setHasAirDevice((sensors & (1 << 7)) != 0);
+                envSensor.setList(getTriggers(b));
+                envSensor.setSerial(serial);
+                hub.putNewDeviceByName(envSensor);
+                hub.putNewDeviceBySrc(envSensor);
+            }
+            else if (dev_type == Devices.SWITCH.getDeviceNum()) {
+                Switch sw = new Switch(name, src);
+                sw.initList(getSwitchListDevices(b));
+                sw.setState((byte) 1);
+                sw.setSerial(serial);
+                hub.putNewDeviceBySrc(sw);
+                hub.putNewDeviceByName(sw);
+            }
+            else if (dev_type == Devices.LAMP.getDeviceNum()) {
+                Lamp lamp = new Lamp(name, src);
+                lamp.setState((byte) 1);
+                lamp.setSerial(serial);
+                hub.putNewDeviceBySrc(lamp);
+                hub.putNewDeviceByName(lamp);
+            }
+            else if (dev_type == Devices.SOCKET.getDeviceNum()) {
+                Socket socket = new Socket(name, src);
+                socket.setState((byte) 1);
+                socket.setSerial(serial);
+                hub.putNewDeviceBySrc(socket);
+                hub.putNewDeviceByName(socket);
+            }
+
+
             // отправить i am here хаба
             ans.append(hub.executeIAMHERE());
         }
@@ -836,44 +1092,113 @@ class PacketEncoder {
             // сначала мы должны получить имя устройства и создать объект этого устройства в зависимости от имени
             String name = getDeviceName(b);
             if (dev_type == Devices.SWITCH.getDeviceNum()) {
-                if (!hub.contains(name)) {
+                if (!hub.contains(src)) {
                     Switch sw = new Switch(name, src);
                     sw.initList(getSwitchListDevices(b));
+                    sw.setState((byte) 1);
+                    sw.setSerial(serial);
                     System.out.println(sw.getDevicesNames());
-                    hub.putNewDevice(sw);
+                    hub.putNewDeviceBySrc(sw);
+                    hub.putNewDeviceByName(sw);
                 }
             }
             else if (dev_type == Devices.LAMP.getDeviceNum()) {
-                if (!hub.contains(name)) {
-                    hub.putNewDevice(new Lamp(name, src));
+                if (!hub.contains(src)) {
+                    Lamp lamp = new Lamp(name, src);
+                    lamp.setState((byte) 1);
+                    lamp.setSerial(serial);
+                    hub.putNewDeviceBySrc(lamp);
+                    hub.putNewDeviceByName(lamp);
                 }
             }
             else if (dev_type == Devices.SOCKET.getDeviceNum()) {
-                if (!hub.contains(name)) {
-                    hub.putNewDevice(new Socket(name, src));
+                if (!hub.contains(src)) {
+                    Socket socket = new Socket(name, src);
+                    socket.setState((byte) 1);
+                    hub.putNewDeviceBySrc(socket);
+                    hub.putNewDeviceByName(socket);
                 }
             }
             else if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
-                if (!hub.contains(name)) {
+                if (!hub.contains(src)) {
                     EnvSensor envSensor = new EnvSensor(name, src);
-                    envSensor.setSensors(getSensors(b));
+                    int sensors = getSensors(b);
+                    envSensor.setSensors(sensors);
+                    envSensor.setHasTempDevice((sensors & (1 << 0)) != 0);
+                    envSensor.setHasWaterDevice((sensors & (1 << 1)) != 0);
+                    envSensor.setHasLuxDevice((sensors & (1 << 3)) != 0);
+                    envSensor.setHasAirDevice((sensors & (1 << 7)) != 0);
                     envSensor.setList(getTriggers(b));
-
+                    envSensor.setSerial(serial);
+                    hub.putNewDeviceByName(envSensor);
+                    hub.putNewDeviceBySrc(envSensor);
                 }
             }
         }
         else if (cmd == Commands.STATUS.getCommandNum()) {
             if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
+                int length = b[packetOffset++];
+                ULEB128Util.bytesCounter = 0;
+                if (hub.getSrcDevice().containsKey(src)) {
+                    Device sensor = hub.getSrcDevice().get(src);
+                    if (sensor.isHasTempDevice()) {
+                        long tempBound = ULEB128Util.decode(b, packetOffset);
+                        packetOffset += ULEB128Util.bytesCounter;
+                        ULEB128Util.bytesCounter = 0;
+                        sensor.setTempBound(tempBound);
+                    }
+                    if (sensor.isHasWaterDevice()) {
+                        long waterBound = ULEB128Util.decode(b, packetOffset);
+                        packetOffset += ULEB128Util.bytesCounter;
+                        ULEB128Util.bytesCounter = 0;
+                        sensor.setWaterBound(waterBound);
+                    }
+                    if (sensor.isHasLuxDevice()) {
+                        long luxBound = ULEB128Util.decode(b, packetOffset);
+                        packetOffset += ULEB128Util.bytesCounter;
+                        ULEB128Util.bytesCounter = 0;
+                        sensor.setLuxBound(luxBound);
+                    }
+                    if (sensor.isHasAirDevice()) {
+                        long airBound = ULEB128Util.decode(b, packetOffset);
+                        packetOffset += ULEB128Util.bytesCounter;
+                        ULEB128Util.bytesCounter = 0;
+                        sensor.setAirBound(airBound);
+                    }
+
+                    hub.getSrcDevice().put(src, sensor);
+                    hub.getNameDevice().put(sensor.getName(), sensor);
+                }
+
 
             }
             else if (dev_type == Devices.SWITCH.getDeviceNum()) {
-
+                Device sw = hub.getDevice(src);
+                int state = b[packetOffset++];
+                sw.setState((byte) 1);
+                List<String> list = sw.getDevicesNames();
+                for (String l : list) {
+                    Device lampOrSocket = hub.getDevice(l);
+                    lampOrSocket.setState((byte) state);
+                    hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
+                    hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
+                    ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), state));
+                }
             }
             else if (dev_type == Devices.LAMP.getDeviceNum()) {
+                Device lamp = hub.getDevice(src);
+                int state = b[packetOffset++];
+                lamp.setState((byte) state);
+                hub.putNewDeviceBySrc(lamp);
+                hub.putNewDeviceByName(lamp);
 
             }
             else if (dev_type == Devices.SOCKET.getDeviceNum()) {
-
+                Device socket = hub.getDevice(src);
+                int state = b[packetOffset++];
+                socket.setState((byte) state);
+                hub.putNewDeviceBySrc(socket);
+                hub.putNewDeviceByName(socket);
             }
         }
 //        System.out.println("src - " + src);
@@ -900,8 +1225,8 @@ class PacketEncoder {
         return list;
     }
 
-    public byte getSensors(int[] b) {
-        return (byte) b[packetOffset++];
+    public int getSensors(int[] b) {
+        return b[packetOffset++] & 0xff;
     }
 
     public List<Trigger> getTriggers(int[] b) {
@@ -910,7 +1235,7 @@ class PacketEncoder {
         int length = b[packetOffset++];
         int counter = 0;
         while (counter < length) {
-            byte op = (byte) b[packetOffset++];
+            int op = b[packetOffset++] & 0xff;
             long value = ULEB128Util.decode(b, packetOffset);
             packetOffset += ULEB128Util.bytesCounter;
             ULEB128Util.bytesCounter = 0;
