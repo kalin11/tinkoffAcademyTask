@@ -463,7 +463,7 @@ class Hub extends Device {
         list.add(name.length());
         for (int i = 1; i < cmd_body.length; i++) {
             cmd_body[i] = bytes[i - 1];
-            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
+//            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
             list.add((int) bytes[i - 1]);
         }
         int[] payload = list.stream().mapToInt(i -> i).toArray();
@@ -549,7 +549,7 @@ class Hub extends Device {
         list.add(name.length());
         for (int i = 1; i < cmd_body.length; i++) {
             cmd_body[i] = bytes[i - 1];
-            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
+//            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
             list.add((int) bytes[i - 1]);
         }
         int[] payload = list.stream().mapToInt(i -> i).toArray();
@@ -1404,7 +1404,7 @@ class PacketEncoder {
         int length = b[packetOffset++];
         int copy = packetOffset;
         byte[] deviceName = new byte[length];
-        System.out.println(Arrays.toString(deviceName));
+//        System.out.println(Arrays.toString(deviceName));
         for (int i = copy; i < copy + length; i++) {
             deviceName[i - copy] = (byte) (b[i]);
             packetOffset++;
