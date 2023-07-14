@@ -363,7 +363,6 @@ class Hub extends Device {
         list.add(name.length());
         for (int i = 1; i < cmd_body.length; i++) {
             cmd_body[i] = bytes[i - 1];
-//            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
             list.add((int) bytes[i - 1]);
         }
         int[] payload = list.stream().mapToInt(i -> i).toArray();
@@ -371,10 +370,6 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-//            System.out.println();
-//            System.out.println("checksum " + Integer.toHexString(checkSum));
-//            System.out.println();
-//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -409,10 +404,6 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-//            System.out.println();
-//            System.out.println("checksum " + Integer.toHexString(checkSum));
-//            System.out.println();
-//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -449,7 +440,6 @@ class Hub extends Device {
         list.add(name.length());
         for (int i = 1; i < cmd_body.length; i++) {
             cmd_body[i] = bytes[i - 1];
-//            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
             list.add((int) bytes[i - 1]);
         }
         int[] payload = list.stream().mapToInt(i -> i).toArray();
@@ -457,10 +447,6 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-//            System.out.println();
-//            System.out.println("checksum " + Integer.toHexString(checkSum));
-//            System.out.println();
-//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -498,10 +484,6 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-//            System.out.println();
-//            System.out.println("checksum " + Integer.toHexString(checkSum));
-//            System.out.println();
-//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -510,8 +492,6 @@ class Hub extends Device {
         }
         return ans.toString();
     }
-
-
 }
 
 class EnvSensor extends Device {
@@ -527,6 +507,7 @@ class EnvSensor extends Device {
     private long waterValue;
     private long luxValue;
     private long airValue;
+
     public EnvSensor(String name, long address) {
         super(name, address, (byte) 0x02);
         if (super.getSerial() != 1) {
@@ -984,7 +965,6 @@ class PacketEncoder {
         long serial = ULEB128Util.decode(b, packetOffset++);
         ULEB128Util.bytesCounter = 0;
         int dev_type = b[packetOffset++];
-//        System.out.println(dev_type);
         int cmd = b[packetOffset++];
         int checkSum = b[b.length - 1];
         if (dev_type == Devices.CLOCK.getDeviceNum() && cmd == Commands.TICK.getCommandNum()) {
@@ -1029,14 +1009,8 @@ class PacketEncoder {
                 hub.putNewDeviceBySrc(socket);
                 hub.putNewDeviceByName(socket);
             }
-
-
-            // отправить i am here хаба
             ans.append(hub.executeIAMHERE());
         } else if (cmd == Commands.IAMHERE.getCommandNum()) {
-            // i am here
-            // сначала мы должны получить имя устройства и создать объект этого устройства в зависимости от имени
-            // проверку на время
             String name = getDeviceName(b);
             long hubTime = hub.getTimestamp();
             if (!(hub.contains(src) && !hub.getDevice(src).getTurnedOnInNet())) {
@@ -1045,8 +1019,6 @@ class PacketEncoder {
                     sw.initList(getSwitchListDevices(b));
 
                     if (hubTime - sw.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
-//                        System.out.println(sw.getDevicesNames());
-                        // если мы получаем I AM HERE, то должны отправить GET STATUS устройству и установить время отправки в локальном хранилище для устройства.
                         sw.setTurnedOnInNet(true);
                         sw.setSerial(serial);
                         sw.setTimestamp(hub.getTimestamp());
@@ -1144,7 +1116,6 @@ class PacketEncoder {
                             sensor.setAirValue(airBound);
                         }
 
-                        // пробежаться по массиву триггеров надо.
 
                         List<Trigger> list = sensor.getList();
                         for (Trigger trigger : list) {
@@ -1205,7 +1176,6 @@ class PacketEncoder {
                         }
                         hub.getSrcDevice().put(src, sensor);
                         hub.getNameDevice().put(sensor.getName(), sensor);
-                        // сделать тут статус
                     }
                 } else if (dev_type == Devices.SWITCH.getDeviceNum()) {
                     Device sw = hub.getDevice(src);
@@ -1220,9 +1190,6 @@ class PacketEncoder {
                             hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
                             ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), state, lampOrSocket.getDev_type()));
                         }
-
-
-//                        System.out.println("выключли все устройства " + sw.getName());
                     } else {
                         sw.setTurnedOnInNet(false);
                         List<String> list = sw.getDevicesNames();
@@ -1231,9 +1198,7 @@ class PacketEncoder {
                             device.setTurnedOnInNet(false);
                             hub.putNewDeviceByName(device);
                             hub.putNewDeviceByName(device);
-//                            System.out.println(l + " умер");
                         }
-//                        System.out.println("упс.. выключатель умер");
                     }
                 } else if (dev_type == Devices.LAMP.getDeviceNum()) {
                     Lamp lamp = (Lamp) hub.getDevice(src);
@@ -1245,7 +1210,6 @@ class PacketEncoder {
                         hub.putNewDeviceBySrc(lamp);
                         hub.putNewDeviceByName(lamp);
                         ans.append(hub.executeSETSTATUS(lamp.getSrc(), state, lamp.getDev_type()));
-//                        System.out.println("изменили состояние лампы");
                     } else {
                         lamp.setTurnedOnInNet(false);
                         hub.putNewDeviceBySrc(lamp);
@@ -1267,21 +1231,9 @@ class PacketEncoder {
                         hub.putNewDeviceBySrc(socket);
                         hub.putNewDeviceByName(socket);
                     }
-//                else {
-//                    int state = b[packetOffset++];
-//                    socket.setState((byte) 0);
-//                    hub.putNewDeviceBySrc(socket);
-//                    hub.putNewDeviceByName(socket);
-//                    ans.append(hub.executeSETSTATUS(socket.getSrc(), 0, socket.getDev_type()));
-//                }
                 }
             }
         }
-//        System.out.println("src - " + src);
-//        System.out.println("dst - " + dst);
-//        System.out.println("serial - " + serial);
-//        System.out.println("dev_type - " + dev_type);
-//        System.out.println("cmd - " + cmd);
         return ans.isEmpty() ? "" : ans.toString();
     }
 
@@ -1338,7 +1290,6 @@ class PacketEncoder {
         int length = b[packetOffset++];
         int copy = packetOffset;
         byte[] deviceName = new byte[length];
-//        System.out.println(Arrays.toString(deviceName));
         for (int i = copy; i < copy + length; i++) {
             deviceName[i - copy] = (byte) (b[i]);
             packetOffset++;
