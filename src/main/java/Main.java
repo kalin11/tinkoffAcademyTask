@@ -13,7 +13,6 @@ public class Main {
         Hub hub = new Hub(ULEB128Util.decode(ULEB128Util.encode(Long.parseLong(args[1], 16)), 0));
         requestBody = new StringBuilder(hub.executeWHOISHERE());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        boolean first = true;
         try {
             url = new URL(args[0]);
             conn = (HttpURLConnection) url.openConnection();
@@ -443,19 +442,19 @@ class Hub extends Device {
         List<Integer> list = new ArrayList<>();
         int[] src = ULEB128Util.encode(super.getSrc());
         for (int s : src) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] dst = ULEB128Util.encode(super.getBroadcastAddress());
         for (int s : dst) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] serial = ULEB128Util.encode(super.getSerial());
         super.setSerial(super.getSerial() + 1);
         for (int s : serial) {
-            list.add((int) s);
+            list.add(s);
         }
         int dev_type = super.getDev_type();
-        list.add((int) dev_type);
+        list.add(dev_type);
         int cmd = Commands.IAMHERE.getCommandNum();
         list.add(cmd);
         byte[] cmd_body = new byte[1 + name.length()];
@@ -490,19 +489,19 @@ class Hub extends Device {
         List<Integer> list = new ArrayList<>();
         int[] src = ULEB128Util.encode(super.getSrc());
         for (int s : src) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] dst = ULEB128Util.encode(dstValue);
         for (int s : dst) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] serial = ULEB128Util.encode(super.getSerial());
         super.setSerial(super.getSerial() + 1);
         for (int s : serial) {
-            list.add((int) s);
+            list.add(s);
         }
         int dev_type = devType;
-        list.add((int) dev_type);
+        list.add(dev_type);
         int cmd = Commands.GETSTATUS.getCommandNum();
         list.add(cmd);
         int[] payload = list.stream().mapToInt(i -> i).toArray();
@@ -529,19 +528,19 @@ class Hub extends Device {
         List<Integer> list = new ArrayList<>();
         int[] src = ULEB128Util.encode(super.getSrc());
         for (int s : src) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] dst = ULEB128Util.encode(super.getBroadcastAddress());
         for (int s : dst) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] serial = ULEB128Util.encode(super.getSerial());
         super.setSerial(super.getSerial() + 1);
         for (int s : serial) {
-            list.add((int) s);
+            list.add(s);
         }
         int dev_type = super.getDev_type();
-        list.add((int) dev_type);
+        list.add(dev_type);
         int cmd = Commands.WHOISHERE.getCommandNum();
         list.add(cmd);
         byte[] cmd_body = new byte[1 + name.length()];
@@ -578,19 +577,19 @@ class Hub extends Device {
         List<Integer> list = new ArrayList<>();
         int[] src = ULEB128Util.encode(super.getSrc());
         for (int s : src) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] dst = ULEB128Util.encode(dstValue);
         for (int s : dst) {
-            list.add((int) s);
+            list.add(s);
         }
         int[] serial = ULEB128Util.encode(super.getSerial());
         super.setSerial(super.getSerial() + 1);
         for (int s : serial) {
-            list.add((int) s);
+            list.add(s);
         }
         int dev_type = dev;
-        list.add((int) dev_type);
+        list.add(dev_type);
         int cmd = Commands.SETSTATUS.getCommandNum();
         list.add(cmd);
         list.add(state);
