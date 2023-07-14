@@ -74,7 +74,6 @@ public class Main {
                         wr.writeBytes(requestBody.toString());
                         wr.flush();
                     }
-
                     // Get the response code
                     responseCode = conn.getResponseCode();
 //                    System.out.println("Response Code: " + responseCode);
