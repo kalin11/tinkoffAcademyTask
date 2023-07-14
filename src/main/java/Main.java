@@ -1143,87 +1143,86 @@ class PacketEncoder {
             //todo проверка на то, что устройство в сети (проверить src в мапе и достать состояние)
             String name = getDeviceName(b);
             long hubTime = hub.getTimestamp();
-            if (dev_type == Devices.SWITCH.getDeviceNum()) {
-                Switch sw = new Switch(name, src);
-                sw.initList(getSwitchListDevices(b));
+//            Device device = hub.getDevice(src);
+//            boolean inStorage = hub.contains(src);
+            if (!(hub.contains(src) && !hub.getDevice(src).getTurnedOnInNet())) {
+                if (dev_type == Devices.SWITCH.getDeviceNum()) {
+                    Switch sw = new Switch(name, src);
+                    sw.initList(getSwitchListDevices(b));
 
-                if (hubTime - sw.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
-                    System.out.println(sw.getDevicesNames());
-                    // если мы получаем I AM HERE, то должны отправить GET STATUS устройству и установить время отправки в локальном хранилище для устройства.
-                    sw.setTurnedOnInNet(true);
-                    sw.setSerial(serial);
-                    sw.setTimestamp(hub.getTimestamp());
-                    hub.putNewDeviceBySrc(sw);
-                    hub.putNewDeviceByName(sw);
-                    ans.append(hub.executeGETSTATUS(src, dev_type));
-                }
-                else {
-                    sw.setTurnedOnInNet(false);
-                    hub.putNewDeviceBySrc(sw);
-                    hub.putNewDeviceByName(sw);
-                }
-            }
-            else if (dev_type == Devices.LAMP.getDeviceNum()) {
-                Lamp lamp = new Lamp(name, src);
+                    if (hubTime - sw.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
+                        System.out.println(sw.getDevicesNames());
+                        // если мы получаем I AM HERE, то должны отправить GET STATUS устройству и установить время отправки в локальном хранилище для устройства.
+                        sw.setTurnedOnInNet(true);
+                        sw.setSerial(serial);
+                        sw.setTimestamp(hub.getTimestamp());
+                        hub.putNewDeviceBySrc(sw);
+                        hub.putNewDeviceByName(sw);
+                        ans.append(hub.executeGETSTATUS(src, dev_type));
+                    } else {
+                        sw.setTurnedOnInNet(false);
+                        hub.putNewDeviceBySrc(sw);
+                        hub.putNewDeviceByName(sw);
+                    }
+                } else if (dev_type == Devices.LAMP.getDeviceNum()) {
+                    Lamp lamp = new Lamp(name, src);
 
-                if (hubTime - lamp.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
-                    lamp.setTurnedOnInNet(true);
-                    lamp.setSerial(serial);
-                    lamp.setTimestamp(hub.getTimestamp());
-                    hub.putNewDeviceBySrc(lamp);
-                    hub.putNewDeviceByName(lamp);
-                    ans.append(hub.executeGETSTATUS(src, dev_type));
-                }
-                else {
-                    lamp.setTurnedOnInNet(false);
-                    hub.putNewDeviceBySrc(lamp);
-                    hub.putNewDeviceByName(lamp);
-                }
-            }
-            else if (dev_type == Devices.SOCKET.getDeviceNum()) {
-                Socket socket = new Socket(name, src);
+                    if (hubTime - lamp.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
+                        lamp.setTurnedOnInNet(true);
+                        lamp.setSerial(serial);
+                        lamp.setTimestamp(hub.getTimestamp());
+                        hub.putNewDeviceBySrc(lamp);
+                        hub.putNewDeviceByName(lamp);
+                        ans.append(hub.executeGETSTATUS(src, dev_type));
+                    } else {
+                        lamp.setTurnedOnInNet(false);
+                        hub.putNewDeviceBySrc(lamp);
+                        hub.putNewDeviceByName(lamp);
+                    }
+                } else if (dev_type == Devices.SOCKET.getDeviceNum()) {
+                    Socket socket = new Socket(name, src);
 
-                if (hubTime - socket.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
-                    socket.setTurnedOnInNet(true);
-                    socket.setSerial(serial);
-                    socket.setTimestamp(hub.getTimestamp());
-                    hub.putNewDeviceBySrc(socket);
-                    hub.putNewDeviceByName(socket);
-                    ans.append(hub.executeGETSTATUS(src, dev_type));
-                }
-                else {
-                    socket.setTurnedOnInNet(false);
-                    hub.putNewDeviceBySrc(socket);
-                    hub.putNewDeviceByName(socket);
-                }
-            }
-            else if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
-                EnvSensor envSensor = new EnvSensor(name, src);
-                if (hubTime - envSensor.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
-                    envSensor.setTurnedOnInNet(true);
-                    int sensors = getSensors(b);
-                    envSensor.setSensors(sensors);
-                    envSensor.setHasTempDevice((sensors & (1 << 0)) != 0);
-                    envSensor.setHasWaterDevice((sensors & (1 << 1)) != 0);
-                    envSensor.setHasLuxDevice((sensors & (1 << 3)) != 0);
-                    envSensor.setHasAirDevice((sensors & (1 << 7)) != 0);
-                    envSensor.setList(getTriggers(b));
-                    envSensor.setSerial(serial);
-                    envSensor.setTimestamp(hub.getTimestamp());
-                    hub.putNewDeviceByName(envSensor);
-                    hub.putNewDeviceBySrc(envSensor);
-                    ans.append(hub.executeGETSTATUS(src, dev_type));
-                }
-                else {
-                    envSensor.setTurnedOnInNet(false);
-                    hub.putNewDeviceByName(envSensor);
-                    hub.putNewDeviceBySrc(envSensor);
+                    if (hubTime - socket.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
+                        socket.setTurnedOnInNet(true);
+                        socket.setSerial(serial);
+                        socket.setTimestamp(hub.getTimestamp());
+                        hub.putNewDeviceBySrc(socket);
+                        hub.putNewDeviceByName(socket);
+                        ans.append(hub.executeGETSTATUS(src, dev_type));
+                    } else {
+                        socket.setTurnedOnInNet(false);
+                        hub.putNewDeviceBySrc(socket);
+                        hub.putNewDeviceByName(socket);
+                    }
+                } else if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
+                    EnvSensor envSensor = new EnvSensor(name, src);
+                    if (hubTime - envSensor.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
+                        envSensor.setTurnedOnInNet(true);
+                        int sensors = getSensors(b);
+                        envSensor.setSensors(sensors);
+                        envSensor.setHasTempDevice((sensors & (1 << 0)) != 0);
+                        envSensor.setHasWaterDevice((sensors & (1 << 1)) != 0);
+                        envSensor.setHasLuxDevice((sensors & (1 << 3)) != 0);
+                        envSensor.setHasAirDevice((sensors & (1 << 7)) != 0);
+                        envSensor.setList(getTriggers(b));
+                        envSensor.setSerial(serial);
+                        envSensor.setTimestamp(hub.getTimestamp());
+                        hub.putNewDeviceByName(envSensor);
+                        hub.putNewDeviceBySrc(envSensor);
+                        ans.append(hub.executeGETSTATUS(src, dev_type));
+                    } else {
+                        envSensor.setTurnedOnInNet(false);
+                        hub.putNewDeviceByName(envSensor);
+                        hub.putNewDeviceBySrc(envSensor);
+                    }
                 }
             }
+            else throw new RuntimeException("1");
         }
         else if (cmd == Commands.STATUS.getCommandNum()) {
             long hubTime = hub.getTimestamp();
             //todo сделать
+            if (!(hub.contains(src) && !hub.getDevice(src).getTurnedOnInNet())) {
             if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
                 int length = b[packetOffset++];
                 ULEB128Util.bytesCounter = 0;
@@ -1285,7 +1284,9 @@ class PacketEncoder {
                         device.setTurnedOnInNet(false);
                         hub.putNewDeviceByName(device);
                         hub.putNewDeviceByName(device);
+                        System.out.println(l + " умер");
                     }
+                    System.out.println("упс.. выключатель умер");
                 }
             }
             else if (dev_type == Devices.LAMP.getDeviceNum()) {
@@ -1298,6 +1299,7 @@ class PacketEncoder {
                     hub.putNewDeviceBySrc(lamp);
                     hub.putNewDeviceByName(lamp);
                     ans.append(hub.executeSETSTATUS(lamp.getSrc(), state, lamp.getDev_type()));
+                    System.out.println("изменили состояние лампы");
                 }
                 else {
                     lamp.setTurnedOnInNet(false);
@@ -1329,6 +1331,7 @@ class PacketEncoder {
 //                    hub.putNewDeviceByName(socket);
 //                    ans.append(hub.executeSETSTATUS(socket.getSrc(), 0, socket.getDev_type()));
 //                }
+            }
             }
         }
 //        System.out.println("src - " + src);
