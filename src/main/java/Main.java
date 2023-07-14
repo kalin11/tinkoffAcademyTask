@@ -65,7 +65,6 @@ public class Main {
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("POST");
                     conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-
                     // Enable output and input streams for writing and reading data
                     conn.setDoOutput(true);
                     conn.setDoInput(true);
