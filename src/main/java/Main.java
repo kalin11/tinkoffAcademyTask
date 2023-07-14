@@ -12,7 +12,6 @@ public class Main {
         BufferedReader in;
         Hub hub = new Hub(ULEB128Util.decode(ULEB128Util.encode(Long.parseLong(args[1], 16)), 0));
         requestBody = new StringBuilder(hub.executeWHOISHERE());
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
             url = new URL(args[0]);
             conn = (HttpURLConnection) url.openConnection();
@@ -44,7 +43,7 @@ public class Main {
             if (encoder.base64IsCorrect(response.toString())) {
                 encoder.setHub(hub);
                 encoder.setStringData(response.toString());
-                requestBody = new StringBuilder(encoder.buildStringForServer(outputStream));
+                requestBody = new StringBuilder(encoder.buildStringForServer());
 //                System.out.println(requestBody);
 
                 // Print the response
@@ -93,10 +92,11 @@ public class Main {
                     if (encoder.base64IsCorrect(response.toString())) {
                         encoder.setStringData(response.toString());
                         encoder.setHub(hub);
-                        requestBody = new StringBuilder(encoder.buildStringForServer(outputStream));
+                        requestBody = new StringBuilder(encoder.buildStringForServer());
                         // Print the response
 //                        System.out.println(Arrays.toString(response.toString().getBytes()));
                     }
+//                    System.out.println("пытаемся отправить - " + requestBody);
                 } catch (IOException e) {
                     System.exit(99);
                 }
@@ -1404,6 +1404,7 @@ class PacketEncoder {
         int length = b[packetOffset++];
         int copy = packetOffset;
         byte[] deviceName = new byte[length];
+        System.out.println(Arrays.toString(deviceName));
         for (int i = copy; i < copy + length; i++) {
             deviceName[i - copy] = (byte) (b[i]);
             packetOffset++;
@@ -1411,7 +1412,8 @@ class PacketEncoder {
         return new String(deviceName);
     }
 
-    public String buildStringForServer(ByteArrayOutputStream outputStream) {
+    public String buildStringForServer() {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         int counter = 0;
         StringBuilder ans = new StringBuilder();
         while (counter < bytes.length) {
