@@ -623,15 +623,6 @@ class Hub extends Device {
         int cmd = Commands.SETSTATUS.getCommandNum();
         list.add(cmd);
         list.add(state);
-//        byte[] cmd_body = new byte[1 + name.length()];
-//        byte[] bytes = name.getBytes();
-//        cmd_body[0] = (byte) name.length();
-//        list.add(name.length());
-//        for (int i = 1; i < cmd_body.length; i++) {
-//            cmd_body[i] = bytes[i - 1];
-//            System.out.print(Integer.toHexString(bytes[i - 1]) + " ");
-//            list.add((int) bytes[i - 1]);
-//        }
         int[] payload = list.stream().mapToInt(i -> i).toArray();
         int checkSum = CheckSumUtil.computeCheckSum(payload);
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
