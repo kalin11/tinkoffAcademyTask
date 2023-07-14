@@ -6,6 +6,8 @@ public class Main {
     public static void main(String[] args) {
         //todo доделать логику у EnvSensor
         //todo timer
+        //todo если мы кидаем какую-то команду, то в dev_type мы шлем тип устройства на которое мы шлем. если шлем на лампу, то dev_type лампы
+        //todo когда-то надо заюзать GETSTATUS. если мы не запрашиваем GETSTAUS, то у переключателя просто не установится адрес для отправки команды STATUS.
 //        String a = "DbMG_38BBgaI0Kv6kzGK";
 ////        System.out.println(Arrays.toString(b));
 //        PacketEncoder encoder = new PacketEncoder("DbMG_38BBgaI0Kv6kzGK");
@@ -14,12 +16,12 @@ public class Main {
 //        System.out.println(Arrays.toString(ULEB128Util.encode(1)));
 //        PacketEncoder encoder = new PacketEncoder("ELMG_38BAQEIU21hcnRIdWJr");
 //        System.out.println("че хочет - ");
-//        encoder.getBytes();
+//        encoder.getBytes();if ()
 //        System.out.println(Arrays.toString("SmartHub".getBytes()));
 //
 //        SmartHub smartHub = new SmartHub();
 //        smartHub.buildCmd();
-
+//Q1BBZGdpQURCQVVCSmdDUEFkZ2lBRUJBVUF6dw
 //        PacketEncoder encoder = new PacketEncoder();
 //        System.out.println(encoder.getByte("0d"));
 //        System.out.println(Arrays.toString(ULEB128Util.encode(819)));
@@ -48,7 +50,6 @@ public class Main {
         int responseCode = 0;
         BufferedReader in;
         Hub hub = new Hub(ULEB128Util.decode(ULEB128Util.encode(Long.parseLong(args[1], 16)), 0));
-        System.out.println("hello - " + hub.executeIAMHERE());
         requestBody = new StringBuilder(hub.executeWHOISHERE());
         System.out.println(requestBody);
         boolean first = true;
@@ -77,6 +78,7 @@ public class Main {
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine.replaceAll("\\s++", ""));
             }
+            System.out.println("server sent - " + response.toString());
 
             PacketEncoder encoder = new PacketEncoder();
             if (encoder.base64IsCorrect(response.toString())) {
@@ -86,8 +88,8 @@ public class Main {
                 System.out.println(requestBody);
 
                 // Print the response
-                System.out.println("Response: " + response.toString());
-                System.out.println(Arrays.toString(response.toString().getBytes()));
+//                System.out.println("Response: " + response.toString());
+//                System.out.println(Arrays.toString(response.toString().getBytes()));
             }
 
         }catch (IOException e) {
@@ -128,10 +130,12 @@ public class Main {
                     while ((inputLine = in.readLine()) != null) {
                         response.append(inputLine.replaceAll("\\s++", ""));
                     }
-
+                    System.out.println("Response: " + response.toString());
                     PacketEncoder encoder = new PacketEncoder();
                     if (encoder.base64IsCorrect(response.toString())) {
+//                    if (encoder.base64IsCorrect("DoEg_3-iBgYG-PCIoJUxWgiCIPAdFQQEAScIgiDwHRYEBACA")) {
                         encoder.setStringData(response.toString());
+//                        encoder.setStringData("DoEg_3-iBgYG-PCIoJUxWgiCIPAdFQQEAScIgiDwHRYEBACA");
                         encoder.setHub(hub);
 //                    PacketEncoder encoder = new PacketEncoder();
 //                    if (first) {
@@ -141,8 +145,8 @@ public class Main {
 //                    else {
 //                        encoder = new PacketEncoder("DALwHQQCBAKlAdSOBos", hub);
 //                    }
-                        System.out.println("Response: " + response.toString());
                         requestBody = new StringBuilder(encoder.buildStringForServer());
+                        System.out.println("пытаемся отправить + " + requestBody.toString());
 //                    StringBuilder s = new StringBuilder(requestBody);
 //                    if (requestBody.length() != 0) {
 //                        Files.write(
@@ -160,48 +164,6 @@ public class Main {
                 }
             }
         }
-
-//        try {
-//            // Create URL object
-//            URL obj = new URL(args[0]);
-//
-//            // Open connection
-//            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-//
-//            // Set the request method to POST
-//            con.setRequestMethod("POST");
-//
-//            // Set request headers
-//            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-//
-//            // Enable output and input streams for writing and reading data
-//            con.setDoOutput(true);
-//            con.setDoInput(true);
-//
-//            // Write the request body to the connection
-//            wr = new DataOutputStream(con.getOutputStream());
-//            wr.writeBytes(requestBody);
-//            wr.flush();
-//
-//            // Get the response code
-//            responseCode = con.getResponseCode();
-//            System.out.println("Response Code: " + responseCode);
-//
-//            // Read the response from the server
-//            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-//            String inputLine;
-//            StringBuilder response = new StringBuilder();
-//
-//            while ((inputLine = in.readLine()) != null) {
-//                response.append(inputLine);
-//            }
-//
-//            // Print the response
-//            System.out.println("Response: " + response.toString());
-//            System.out.println(Arrays.toString(response.toString().getBytes()));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 }
 
@@ -250,6 +212,8 @@ abstract class Device {
     private long timestamp;
     private int checkSum;
 
+    private boolean turnedOnInNet;
+
     private final int broadcastAddress = 16383;
 
     // EnvSensor
@@ -276,6 +240,14 @@ abstract class Device {
         this.name = name;
         this.src = src;
         this.dev_type = dev_type;
+    }
+
+    public boolean getTurnedOnInNet() {
+        return turnedOnInNet;
+    }
+
+    public void setTurnedOnInNet(boolean turnedOnInNet) {
+        this.turnedOnInNet = turnedOnInNet;
     }
 
     public long getTempBound() {
@@ -446,11 +418,20 @@ abstract class Device {
 class Hub extends Device {
     private Map<Long, Device> srcDevice;
     private Map<String, Device> nameDevice;
+    private long whoIsHereTime;
     public Hub (long address) {
         super("HUB01", address, (byte) 0x01);
         super.setSerial(1);
         srcDevice = new HashMap<>();
         nameDevice = new HashMap<>();
+    }
+
+    public long getWhoIsHereTime() {
+        return whoIsHereTime;
+    }
+
+    public void setWhoIsHereTime(long whoIsHereTime) {
+        this.whoIsHereTime = whoIsHereTime;
     }
 
     public Map<String, Device> getNameDevice() {
@@ -534,6 +515,44 @@ class Hub extends Device {
         return ans.toString();
     }
 
+    public String executeGETSTATUS(long dstValue, int devType) {
+        StringBuilder ans = new StringBuilder();
+        List<Integer> list = new ArrayList<>();
+        int[] src = ULEB128Util.encode(super.getSrc());
+        for (int s : src) {
+            list.add((int) s);
+        }
+        int[] dst = ULEB128Util.encode(dstValue);
+        for (int s : dst) {
+            list.add((int) s);
+        }
+        int[] serial = ULEB128Util.encode(super.getSerial());
+        super.setSerial(super.getSerial() + 1);
+        for (int s : serial) {
+            list.add((int) s);
+        }
+        int dev_type = devType;
+        list.add((int) dev_type);
+        int cmd = Commands.GETSTATUS.getCommandNum();
+        list.add(cmd);
+        int[] payload = list.stream().mapToInt(i -> i).toArray();
+        int checkSum = CheckSumUtil.computeCheckSum(payload);
+        if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
+            list.add(0, list.size());
+            list.add(checkSum);
+            System.out.println();
+            System.out.println("checksum " + Integer.toHexString(checkSum));
+            System.out.println();
+            System.out.println(list);
+            byte[] x = new byte[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                x[i] = (byte) (list.get(i) & 0x00ff);
+            }
+            ans.append(new String(Base64.getUrlEncoder().withoutPadding().encode(x)));
+        }
+        return ans.toString();
+    }
+
     public String executeWHOISHERE() {
         StringBuilder ans = new StringBuilder();
         String name = super.getName();
@@ -582,7 +601,7 @@ class Hub extends Device {
         return ans.toString();
     }
 
-    public String executeSETSTATUS(long dstValue, int state) {
+    public String executeSETSTATUS(long dstValue, int state, int dev) {
         StringBuilder ans = new StringBuilder();
         String name = super.getName();
         List<Integer> list = new ArrayList<>();
@@ -599,7 +618,7 @@ class Hub extends Device {
         for (int s : serial) {
             list.add((int) s);
         }
-        int dev_type = super.getDev_type();
+        int dev_type = dev;
         list.add((int) dev_type);
         int cmd = Commands.SETSTATUS.getCommandNum();
         list.add(cmd);
@@ -1039,6 +1058,8 @@ class PacketEncoder {
         this.hub = hub;
     }
 
+
+
     public boolean base64IsCorrect(String data) {
         boolean res = false;
         try {
@@ -1076,9 +1097,13 @@ class PacketEncoder {
             long timestamp = ULEB128Util.decode(b, packetOffset++);
             ULEB128Util.bytesCounter = 0;
             hub.setTimestamp(timestamp);
+            if (hub.getWhoIsHereTime() == 0) {
+                hub.setWhoIsHereTime(timestamp);
+            }
         }
         else if (cmd == Commands.WHOISHERE.getCommandNum()) {
             String name = getDeviceName(b);
+            //todo проверку что данное устройство отключено или не содержится в мапе
             if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
                 EnvSensor envSensor = new EnvSensor(name, src);
                 int sensors = getSensors(b);
@@ -1089,28 +1114,29 @@ class PacketEncoder {
                 envSensor.setHasAirDevice((sensors & (1 << 7)) != 0);
                 envSensor.setList(getTriggers(b));
                 envSensor.setSerial(serial);
+                envSensor.setTurnedOnInNet(true);
                 hub.putNewDeviceByName(envSensor);
                 hub.putNewDeviceBySrc(envSensor);
             }
             else if (dev_type == Devices.SWITCH.getDeviceNum()) {
                 Switch sw = new Switch(name, src);
                 sw.initList(getSwitchListDevices(b));
-                sw.setState((byte) 1);
                 sw.setSerial(serial);
+                sw.setTurnedOnInNet(true);
                 hub.putNewDeviceBySrc(sw);
                 hub.putNewDeviceByName(sw);
             }
             else if (dev_type == Devices.LAMP.getDeviceNum()) {
                 Lamp lamp = new Lamp(name, src);
-                lamp.setState((byte) 1);
                 lamp.setSerial(serial);
+                lamp.setTurnedOnInNet(true);
                 hub.putNewDeviceBySrc(lamp);
                 hub.putNewDeviceByName(lamp);
             }
             else if (dev_type == Devices.SOCKET.getDeviceNum()) {
                 Socket socket = new Socket(name, src);
-                socket.setState((byte) 1);
                 socket.setSerial(serial);
+                socket.setTurnedOnInNet(true);
                 hub.putNewDeviceBySrc(socket);
                 hub.putNewDeviceByName(socket);
             }
@@ -1122,38 +1148,68 @@ class PacketEncoder {
         else if (cmd == Commands.IAMHERE.getCommandNum()) {
             // i am here
             // сначала мы должны получить имя устройства и создать объект этого устройства в зависимости от имени
+            // проверку на время
+            //todo проверка на то, что устройство в сети (проверить src в мапе и достать состояние)
             String name = getDeviceName(b);
+            long hubTime = hub.getTimestamp();
             if (dev_type == Devices.SWITCH.getDeviceNum()) {
-                if (!hub.contains(src)) {
-                    Switch sw = new Switch(name, src);
-                    sw.initList(getSwitchListDevices(b));
-                    sw.setState((byte) 1);
-                    sw.setSerial(serial);
+                Switch sw = new Switch(name, src);
+                sw.initList(getSwitchListDevices(b));
+
+                if (hubTime - sw.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
                     System.out.println(sw.getDevicesNames());
+                    // если мы получаем I AM HERE, то должны отправить GET STATUS устройству и установить время отправки в локальном хранилище для устройства.
+                    sw.setTurnedOnInNet(true);
+                    sw.setSerial(serial);
+                    sw.setTimestamp(hub.getTimestamp());
+                    hub.putNewDeviceBySrc(sw);
+                    hub.putNewDeviceByName(sw);
+                    ans.append(hub.executeGETSTATUS(src, dev_type));
+                }
+                else {
+                    sw.setTurnedOnInNet(false);
                     hub.putNewDeviceBySrc(sw);
                     hub.putNewDeviceByName(sw);
                 }
             }
             else if (dev_type == Devices.LAMP.getDeviceNum()) {
-                if (!hub.contains(src)) {
-                    Lamp lamp = new Lamp(name, src);
-                    lamp.setState((byte) 1);
+                Lamp lamp = new Lamp(name, src);
+
+                if (hubTime - lamp.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
+                    lamp.setTurnedOnInNet(true);
                     lamp.setSerial(serial);
+                    lamp.setTimestamp(hub.getTimestamp());
+                    hub.putNewDeviceBySrc(lamp);
+                    hub.putNewDeviceByName(lamp);
+                    ans.append(hub.executeGETSTATUS(src, dev_type));
+                }
+                else {
+                    lamp.setTurnedOnInNet(false);
                     hub.putNewDeviceBySrc(lamp);
                     hub.putNewDeviceByName(lamp);
                 }
             }
             else if (dev_type == Devices.SOCKET.getDeviceNum()) {
-                if (!hub.contains(src)) {
-                    Socket socket = new Socket(name, src);
-                    socket.setState((byte) 1);
+                Socket socket = new Socket(name, src);
+
+                if (hubTime - socket.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
+                    socket.setTurnedOnInNet(true);
+                    socket.setSerial(serial);
+                    socket.setTimestamp(hub.getTimestamp());
+                    hub.putNewDeviceBySrc(socket);
+                    hub.putNewDeviceByName(socket);
+                    ans.append(hub.executeGETSTATUS(src, dev_type));
+                }
+                else {
+                    socket.setTurnedOnInNet(false);
                     hub.putNewDeviceBySrc(socket);
                     hub.putNewDeviceByName(socket);
                 }
             }
             else if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
-                if (!hub.contains(src)) {
-                    EnvSensor envSensor = new EnvSensor(name, src);
+                EnvSensor envSensor = new EnvSensor(name, src);
+                if (hubTime - envSensor.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
+                    envSensor.setTurnedOnInNet(true);
                     int sensors = getSensors(b);
                     envSensor.setSensors(sensors);
                     envSensor.setHasTempDevice((sensors & (1 << 0)) != 0);
@@ -1162,12 +1218,21 @@ class PacketEncoder {
                     envSensor.setHasAirDevice((sensors & (1 << 7)) != 0);
                     envSensor.setList(getTriggers(b));
                     envSensor.setSerial(serial);
+                    envSensor.setTimestamp(hub.getTimestamp());
+                    hub.putNewDeviceByName(envSensor);
+                    hub.putNewDeviceBySrc(envSensor);
+                    ans.append(hub.executeGETSTATUS(src, dev_type));
+                }
+                else {
+                    envSensor.setTurnedOnInNet(false);
                     hub.putNewDeviceByName(envSensor);
                     hub.putNewDeviceBySrc(envSensor);
                 }
             }
         }
         else if (cmd == Commands.STATUS.getCommandNum()) {
+            long hubTime = hub.getTimestamp();
+            //todo сделать
             if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
                 int length = b[packetOffset++];
                 ULEB128Util.bytesCounter = 0;
@@ -1200,37 +1265,79 @@ class PacketEncoder {
 
                     hub.getSrcDevice().put(src, sensor);
                     hub.getNameDevice().put(sensor.getName(), sensor);
+                    // сделать тут статус
                 }
 
 
             }
             else if (dev_type == Devices.SWITCH.getDeviceNum()) {
                 Device sw = hub.getDevice(src);
-                int state = b[packetOffset++];
-                sw.setState((byte) 1);
-                List<String> list = sw.getDevicesNames();
-                for (String l : list) {
-                    Device lampOrSocket = hub.getDevice(l);
-                    lampOrSocket.setState((byte) state);
-                    hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
-                    hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
-                    ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), state));
+                long swTime = sw.getTimestamp();
+                if (hubTime - swTime <= 300) {
+                    int state = b[packetOffset++];
+                    sw.setState((byte) state);
+                    List<String> list = sw.getDevicesNames();
+                    for (String l : list) {
+                        Device lampOrSocket = hub.getDevice(l);
+                        lampOrSocket.setState((byte) state);
+                        hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
+                        hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
+                        ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), state, lampOrSocket.getDev_type()));
+                    }
+                    System.out.println("выключли все устройства " + sw.getName());
+                }
+                else {
+                    sw.setTurnedOnInNet(false);
+                    List<String> list = sw.getDevicesNames();
+                    for (String l : list) {
+                        Device device = hub.getDevice(l);
+                        device.setTurnedOnInNet(false);
+                        hub.putNewDeviceByName(device);
+                        hub.putNewDeviceByName(device);
+                    }
                 }
             }
             else if (dev_type == Devices.LAMP.getDeviceNum()) {
-                Device lamp = hub.getDevice(src);
-                int state = b[packetOffset++];
-                lamp.setState((byte) state);
-                hub.putNewDeviceBySrc(lamp);
-                hub.putNewDeviceByName(lamp);
+                Lamp lamp = (Lamp) hub.getDevice(src);
+                long deviceTime = lamp.getTimestamp();
+                if (hubTime - deviceTime <= 300) {
+                    int state = b[packetOffset++];
+                    lamp.setTurnedOnInNet(true);
+                    lamp.setState((byte) state);
+                    hub.putNewDeviceBySrc(lamp);
+                    hub.putNewDeviceByName(lamp);
+                    ans.append(hub.executeSETSTATUS(lamp.getSrc(), state, lamp.getDev_type()));
+                }
+                else {
+                    lamp.setTurnedOnInNet(false);
+                    hub.putNewDeviceBySrc(lamp);
+                    hub.putNewDeviceByName(lamp);
+                }
 
             }
             else if (dev_type == Devices.SOCKET.getDeviceNum()) {
-                Device socket = hub.getDevice(src);
-                int state = b[packetOffset++];
-                socket.setState((byte) state);
-                hub.putNewDeviceBySrc(socket);
-                hub.putNewDeviceByName(socket);
+                Socket socket = (Socket) hub.getDevice(src);
+                long deviceTime = socket.getTimestamp();
+                if (hubTime - deviceTime <= 300) {
+                    socket.setTurnedOnInNet(true);
+                    int state = b[packetOffset++];
+                    socket.setState((byte) state);
+                    hub.putNewDeviceBySrc(socket);
+                    hub.putNewDeviceByName(socket);
+                    ans.append(hub.executeSETSTATUS(socket.getSrc(), state, socket.getDev_type()));
+                }
+                else {
+                    socket.setTurnedOnInNet(false);
+                    hub.putNewDeviceBySrc(socket);
+                    hub.putNewDeviceByName(socket);
+                }
+//                else {
+//                    int state = b[packetOffset++];
+//                    socket.setState((byte) 0);
+//                    hub.putNewDeviceBySrc(socket);
+//                    hub.putNewDeviceByName(socket);
+//                    ans.append(hub.executeSETSTATUS(socket.getSrc(), 0, socket.getDev_type()));
+//                }
             }
         }
 //        System.out.println("src - " + src);
@@ -1294,6 +1401,7 @@ class PacketEncoder {
     public String buildStringForServer() {
         int counter = 0;
         StringBuilder ans = new StringBuilder();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         while (counter < bytes.length) {
             int length = bytes[counter];
             int[] b = new int[length + 2];
@@ -1311,11 +1419,23 @@ class PacketEncoder {
                 System.out.println("ok");
                 String string = manageReceivedCommand(b);
                 if (string.length() != 0) {
-                    ans.append(string);
+                    try {
+                        outputStream.write(Base64.getUrlDecoder().decode(string));
+                        ans.append(string);
+                    }catch (IOException e) {
+
+                    }
                 }
             }
         }
-        return ans.toString();
+        byte[] temp = outputStream.toByteArray();
+        int c = 0;
+        byte[] a = new byte[temp.length - c];
+        for (int i = 0; i < temp.length; i++) {
+            a[i] = (byte) (temp[i] & 0x00ff);
+        }
+        return new String(Base64.getUrlEncoder().withoutPadding().encode(a));
+//        return ans.toString();
     }
 }
 
