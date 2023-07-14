@@ -184,20 +184,6 @@ abstract class Device {
 
     private final int broadcastAddress = 16383;
 
-    // EnvSensor
-    private int sensors;
-    private int op;
-    private List<Trigger> list;
-    private boolean hasTempDevice;
-    private boolean hasWaterDevice;
-    private boolean hasLuxDevice;
-    private boolean hasAirDevice;
-
-    private long tempValue;
-    private long waterValue;
-    private long luxValue;
-    private long airValue;
-
     // Socket && Lamp && Switch
     private byte state;
 
@@ -218,45 +204,6 @@ abstract class Device {
         this.turnedOnInNet = turnedOnInNet;
     }
 
-    public long getTempValue() {
-        return tempValue;
-    }
-
-    public void setTempValue(long tempBound) {
-        this.tempValue = tempBound;
-    }
-
-    public long getWaterValue() {
-        return waterValue;
-    }
-
-    public void setWaterValue(long waterB) {
-        this.waterValue = waterB;
-    }
-
-    public long getLuxValue() {
-        return luxValue;
-    }
-
-    public void setLuxValue(long luxValue) {
-        this.luxValue = luxValue;
-    }
-
-    public long getAirValue() {
-        return airValue;
-    }
-
-    public void setAirValue(long airValue) {
-        this.airValue = airValue;
-    }
-
-    public List<Trigger> getList() {
-        return list;
-    }
-
-    public void setList(List<Trigger> list) {
-        this.list = list;
-    }
 
     public void setDevicesNames(List<String> devicesNames) {
         this.devicesNames = devicesNames;
@@ -267,38 +214,6 @@ abstract class Device {
             this.devicesNames = new ArrayList<>();
         }
         return this.devicesNames;
-    }
-
-    public boolean isHasTempDevice() {
-        return hasTempDevice;
-    }
-
-    public void setHasTempDevice(boolean hasTempDevice) {
-        this.hasTempDevice = hasTempDevice;
-    }
-
-    public boolean isHasWaterDevice() {
-        return hasWaterDevice;
-    }
-
-    public void setHasWaterDevice(boolean hasWaterDevice) {
-        this.hasWaterDevice = hasWaterDevice;
-    }
-
-    public boolean isHasLuxDevice() {
-        return hasLuxDevice;
-    }
-
-    public void setHasLuxDevice(boolean hasLuxDevice) {
-        this.hasLuxDevice = hasLuxDevice;
-    }
-
-    public boolean isHasAirDevice() {
-        return hasAirDevice;
-    }
-
-    public void setHasAirDevice(boolean hasAirDevice) {
-        this.hasAirDevice = hasAirDevice;
     }
 
     public int getBroadcastAddress() {
@@ -358,21 +273,6 @@ abstract class Device {
         this.timestamp = timestamp;
     }
 
-    public int getSensors() {
-        return sensors;
-    }
-
-    public void setSensors(int sensors) {
-        this.sensors = sensors;
-    }
-
-    public int getOp() {
-        return op;
-    }
-
-    public void setOp(byte op) {
-        this.op = op;
-    }
 
     public byte getState() {
         return state;
@@ -615,78 +515,112 @@ class Hub extends Device {
 }
 
 class EnvSensor extends Device {
+    private int sensors;
+    private int op;
+    private List<Trigger> list;
+    private boolean hasTempDevice;
+    private boolean hasWaterDevice;
+    private boolean hasLuxDevice;
+    private boolean hasAirDevice;
+
+    private long tempValue;
+    private long waterValue;
+    private long luxValue;
+    private long airValue;
     public EnvSensor(String name, long address) {
         super(name, address, (byte) 0x02);
         if (super.getSerial() != 1) {
             super.setSerial(1);
         }
-        super.setList(new ArrayList<>());
+        this.list = new ArrayList<>();
     }
 
-    @Override
+    public long getTempValue() {
+        return tempValue;
+    }
+
+    public void setTempValue(long tempValue) {
+        this.tempValue = tempValue;
+    }
+
+    public long getWaterValue() {
+        return waterValue;
+    }
+
+    public void setWaterValue(long waterValue) {
+        this.waterValue = waterValue;
+    }
+
+    public long getLuxValue() {
+        return luxValue;
+    }
+
+    public void setLuxValue(long luxValue) {
+        this.luxValue = luxValue;
+    }
+
+    public long getAirValue() {
+        return airValue;
+    }
+
+    public void setAirValue(long airValue) {
+        this.airValue = airValue;
+    }
+
     public List<Trigger> getList() {
-        return super.getList();
+        return list;
     }
 
-    @Override
     public void setList(List<Trigger> list) {
-        super.setList(list);
+        this.list = list;
     }
 
-    @Override
     public boolean isHasTempDevice() {
-        return super.isHasTempDevice();
+        return hasTempDevice;
     }
 
-    @Override
     public void setHasTempDevice(boolean hasTempDevice) {
-        super.setHasTempDevice(hasTempDevice);
+        this.hasTempDevice = hasTempDevice;
     }
 
-    @Override
     public boolean isHasWaterDevice() {
-        return super.isHasWaterDevice();
+        return hasWaterDevice;
     }
 
-    @Override
     public void setHasWaterDevice(boolean hasWaterDevice) {
-        super.setHasWaterDevice(hasWaterDevice);
+        this.hasWaterDevice = hasWaterDevice;
     }
 
-    @Override
     public boolean isHasLuxDevice() {
-        return super.isHasLuxDevice();
+        return hasLuxDevice;
     }
 
-    @Override
     public void setHasLuxDevice(boolean hasLuxDevice) {
-        super.setHasLuxDevice(hasLuxDevice);
+        this.hasLuxDevice = hasLuxDevice;
     }
 
-    @Override
     public boolean isHasAirDevice() {
-        return super.isHasAirDevice();
+        return hasAirDevice;
     }
 
-    @Override
     public void setHasAirDevice(boolean hasAirDevice) {
-        super.setHasAirDevice(hasAirDevice);
+        this.hasAirDevice = hasAirDevice;
     }
 
     public int getSensors() {
-        return super.getSensors();
+        return sensors;
     }
 
     public void setSensors(int sensors) {
-        super.setSensors(sensors);
+        this.sensors = sensors;
     }
 
     public int getOp() {
-        return super.getOp();
+        return op;
     }
 
-    public void setOp(byte op) {
-        super.setOp(op);
+    public void setOp(int op) {
+        this.op = op;
     }
 
     public int getCheckSum() {
