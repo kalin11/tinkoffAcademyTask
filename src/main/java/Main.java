@@ -51,7 +51,7 @@ public class Main {
         BufferedReader in;
         Hub hub = new Hub(ULEB128Util.decode(ULEB128Util.encode(Long.parseLong(args[1], 16)), 0));
         requestBody = new StringBuilder(hub.executeWHOISHERE());
-        System.out.println(requestBody);
+//        System.out.println(requestBody);
         boolean first = true;
         try {
             url = new URL(args[0]);
@@ -68,7 +68,7 @@ public class Main {
 
             // Get the response code
             responseCode = conn.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
+//            System.out.println("Response Code: " + responseCode);
 
             // Read the response from the server
             in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -78,30 +78,28 @@ public class Main {
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine.replaceAll("\\s++", ""));
             }
-            System.out.println("server sent - " + response.toString());
+//            System.out.println("server sent - " + response.toString());
 
             PacketEncoder encoder = new PacketEncoder();
             if (encoder.base64IsCorrect(response.toString())) {
                 encoder.setHub(hub);
                 encoder.setStringData(response.toString());
                 requestBody = new StringBuilder(encoder.buildStringForServer());
-                System.out.println(requestBody);
+//                System.out.println(requestBody);
 
                 // Print the response
 //                System.out.println("Response: " + response.toString());
 //                System.out.println(Arrays.toString(response.toString().getBytes()));
             }
 
-        }catch (IOException e) {
+        } catch (IOException e) {
             System.exit(99);
         }
         if (responseCode != 200 && responseCode != 204) {
             System.exit(99);
-        }
-        else if (responseCode == 204) {
+        } else if (responseCode == 204) {
             System.exit(0);
-        }
-        else if (responseCode == 200) {
+        } else if (responseCode == 200) {
             while (responseCode != 204) {
                 try {
                     url = new URL(args[0]);
@@ -120,7 +118,7 @@ public class Main {
 
                     // Get the response code
                     responseCode = conn.getResponseCode();
-                    System.out.println("Response Code: " + responseCode);
+//                    System.out.println("Response Code: " + responseCode);
 
                     // Read the response from the server
                     in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -130,7 +128,7 @@ public class Main {
                     while ((inputLine = in.readLine()) != null) {
                         response.append(inputLine.replaceAll("\\s++", ""));
                     }
-                    System.out.println("Response: " + response.toString());
+//                    System.out.println("Response: " + response.toString());
                     PacketEncoder encoder = new PacketEncoder();
                     if (encoder.base64IsCorrect(response.toString())) {
 //                    if (encoder.base64IsCorrect("DoEg_3-iBgYG-PCIoJUxWgiCIPAdFQQEAScIgiDwHRYEBACA")) {
@@ -146,7 +144,7 @@ public class Main {
 //                        encoder = new PacketEncoder("DALwHQQCBAKlAdSOBos", hub);
 //                    }
                         requestBody = new StringBuilder(encoder.buildStringForServer());
-                        System.out.println("пытаемся отправить + " + requestBody.toString());
+//                        System.out.println("пытаемся отправить + " + requestBody.toString());
 //                    StringBuilder s = new StringBuilder(requestBody);
 //                    if (requestBody.length() != 0) {
 //                        Files.write(
@@ -156,10 +154,9 @@ public class Main {
 //                        );
 //                    }
                         // Print the response
-                        System.out.println(Arrays.toString(response.toString().getBytes()));
+//                        System.out.println(Arrays.toString(response.toString().getBytes()));
                     }
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     System.exit(99);
                 }
             }
@@ -172,10 +169,40 @@ class Trigger {
     private long value;
     private String name;
 
+    private int turnOnOff;
+
+    private int lessOrMore;
+
+    private int sensorType;
+
     public Trigger(int op, long value, String name) {
         this.op = op;
         this.value = value;
         this.name = name;
+    }
+
+    public int getTurnOnOff() {
+        return turnOnOff;
+    }
+
+    public void setTurnOnOff(int turnOnOff) {
+        this.turnOnOff = turnOnOff;
+    }
+
+    public int getLessOrMore() {
+        return lessOrMore;
+    }
+
+    public void setLessOrMore(int lessOrMore) {
+        this.lessOrMore = lessOrMore;
+    }
+
+    public int getSensorType() {
+        return sensorType;
+    }
+
+    public void setSensorType(int sensorType) {
+        this.sensorType = sensorType;
     }
 
     public int getOp() {
@@ -225,10 +252,10 @@ abstract class Device {
     private boolean hasLuxDevice;
     private boolean hasAirDevice;
 
-    private long tempBound;
-    private long waterBound;
-    private long luxBound;
-    private long airBound;
+    private long tempValue;
+    private long waterValue;
+    private long luxValue;
+    private long airValue;
 
     // Socket && Lamp && Switch
     private byte state;
@@ -250,36 +277,36 @@ abstract class Device {
         this.turnedOnInNet = turnedOnInNet;
     }
 
-    public long getTempBound() {
-        return tempBound;
+    public long getTempValue() {
+        return tempValue;
     }
 
-    public void setTempBound(long tempBound) {
-        this.tempBound = tempBound;
+    public void setTempValue(long tempBound) {
+        this.tempValue = tempBound;
     }
 
-    public long getWaterBound() {
-        return waterBound;
+    public long getWaterValue() {
+        return waterValue;
     }
 
-    public void setWaterBound(long waterBound) {
-        this.waterBound = waterBound;
+    public void setWaterValue(long waterB) {
+        this.waterValue = waterB;
     }
 
-    public long getLuxBound() {
-        return luxBound;
+    public long getLuxValue() {
+        return luxValue;
     }
 
-    public void setLuxBound(long luxBound) {
-        this.luxBound = luxBound;
+    public void setLuxValue(long luxValue) {
+        this.luxValue = luxValue;
     }
 
-    public long getAirBound() {
-        return airBound;
+    public long getAirValue() {
+        return airValue;
     }
 
-    public void setAirBound(long airBound) {
-        this.airBound = airBound;
+    public void setAirValue(long airValue) {
+        this.airValue = airValue;
     }
 
     public List<Trigger> getList() {
@@ -419,7 +446,8 @@ class Hub extends Device {
     private Map<Long, Device> srcDevice;
     private Map<String, Device> nameDevice;
     private long whoIsHereTime;
-    public Hub (long address) {
+
+    public Hub(long address) {
         super("HUB01", address, (byte) 0x01);
         super.setSerial(1);
         srcDevice = new HashMap<>();
@@ -446,7 +474,7 @@ class Hub extends Device {
         srcDevice.put(device.getSrc(), device);
     }
 
-    public void putNewDeviceByName(Device device){
+    public void putNewDeviceByName(Device device) {
         nameDevice.put(device.getName(), device);
     }
 
@@ -502,10 +530,10 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-            System.out.println();
-            System.out.println("checksum " + Integer.toHexString(checkSum));
-            System.out.println();
-            System.out.println(list);
+//            System.out.println();
+//            System.out.println("checksum " + Integer.toHexString(checkSum));
+//            System.out.println();
+//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -540,10 +568,10 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-            System.out.println();
-            System.out.println("checksum " + Integer.toHexString(checkSum));
-            System.out.println();
-            System.out.println(list);
+//            System.out.println();
+//            System.out.println("checksum " + Integer.toHexString(checkSum));
+//            System.out.println();
+//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -588,10 +616,10 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-            System.out.println();
-            System.out.println("checksum " + Integer.toHexString(checkSum));
-            System.out.println();
-            System.out.println(list);
+//            System.out.println();
+//            System.out.println("checksum " + Integer.toHexString(checkSum));
+//            System.out.println();
+//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -628,10 +656,10 @@ class Hub extends Device {
         if (CheckSumUtil.validateCheckSum(payload, checkSum)) {
             list.add(0, list.size());
             list.add(checkSum);
-            System.out.println();
-            System.out.println("checksum " + Integer.toHexString(checkSum));
-            System.out.println();
-            System.out.println(list);
+//            System.out.println();
+//            System.out.println("checksum " + Integer.toHexString(checkSum));
+//            System.out.println();
+//            System.out.println(list);
             byte[] x = new byte[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
@@ -774,7 +802,7 @@ class EnvSensor extends Device {
 }
 
 class Switch extends Device {
-    public Switch (String name, long address) {
+    public Switch(String name, long address) {
         super(name, address, (byte) 0x03);
     }
 
@@ -922,7 +950,7 @@ class Lamp extends Device {
 
 class Socket extends Device {
 
-    public Socket (String name, long address) {
+    public Socket(String name, long address) {
         super(name, address, (byte) 0x05);
     }
 
@@ -1018,6 +1046,13 @@ enum Commands {
     }
 }
 
+enum Sensors {
+    TEMPERATURE,
+    WATER,
+    LUX,
+    AIR;
+}
+
 class PacketEncoder {
     private String stringData;
     private Integer[] bytes;
@@ -1032,7 +1067,11 @@ class PacketEncoder {
 
     //todo время
 
-    public PacketEncoder() {};
+    public PacketEncoder() {
+    }
+
+    ;
+
     public String getStringData() {
         return stringData;
     }
@@ -1050,7 +1089,6 @@ class PacketEncoder {
     }
 
 
-
     public boolean base64IsCorrect(String data) {
         boolean res = false;
         try {
@@ -1060,8 +1098,7 @@ class PacketEncoder {
                 bytes[i] = temp[i] & 0x00ff;
             }
             res = true;
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             res = false;
         }
         return res;
@@ -1081,7 +1118,7 @@ class PacketEncoder {
         long serial = ULEB128Util.decode(b, packetOffset++);
         ULEB128Util.bytesCounter = 0;
         int dev_type = b[packetOffset++];
-        System.out.println(dev_type);
+//        System.out.println(dev_type);
         int cmd = b[packetOffset++];
         int checkSum = b[b.length - 1];
         if (dev_type == Devices.CLOCK.getDeviceNum() && cmd == Commands.TICK.getCommandNum()) {
@@ -1091,8 +1128,7 @@ class PacketEncoder {
             if (hub.getWhoIsHereTime() == 0) {
                 hub.setWhoIsHereTime(timestamp);
             }
-        }
-        else if (cmd == Commands.WHOISHERE.getCommandNum()) {
+        } else if (cmd == Commands.WHOISHERE.getCommandNum()) {
             String name = getDeviceName(b);
             //todo проверку что данное устройство отключено или не содержится в мапе
             if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
@@ -1108,23 +1144,20 @@ class PacketEncoder {
                 envSensor.setTurnedOnInNet(true);
                 hub.putNewDeviceByName(envSensor);
                 hub.putNewDeviceBySrc(envSensor);
-            }
-            else if (dev_type == Devices.SWITCH.getDeviceNum()) {
+            } else if (dev_type == Devices.SWITCH.getDeviceNum()) {
                 Switch sw = new Switch(name, src);
                 sw.initList(getSwitchListDevices(b));
                 sw.setSerial(serial);
                 sw.setTurnedOnInNet(true);
                 hub.putNewDeviceBySrc(sw);
                 hub.putNewDeviceByName(sw);
-            }
-            else if (dev_type == Devices.LAMP.getDeviceNum()) {
+            } else if (dev_type == Devices.LAMP.getDeviceNum()) {
                 Lamp lamp = new Lamp(name, src);
                 lamp.setSerial(serial);
                 lamp.setTurnedOnInNet(true);
                 hub.putNewDeviceBySrc(lamp);
                 hub.putNewDeviceByName(lamp);
-            }
-            else if (dev_type == Devices.SOCKET.getDeviceNum()) {
+            } else if (dev_type == Devices.SOCKET.getDeviceNum()) {
                 Socket socket = new Socket(name, src);
                 socket.setSerial(serial);
                 socket.setTurnedOnInNet(true);
@@ -1135,23 +1168,19 @@ class PacketEncoder {
 
             // отправить i am here хаба
             ans.append(hub.executeIAMHERE());
-        }
-        else if (cmd == Commands.IAMHERE.getCommandNum()) {
+        } else if (cmd == Commands.IAMHERE.getCommandNum()) {
             // i am here
             // сначала мы должны получить имя устройства и создать объект этого устройства в зависимости от имени
             // проверку на время
-            //todo проверка на то, что устройство в сети (проверить src в мапе и достать состояние)
             String name = getDeviceName(b);
             long hubTime = hub.getTimestamp();
-//            Device device = hub.getDevice(src);
-//            boolean inStorage = hub.contains(src);
             if (!(hub.contains(src) && !hub.getDevice(src).getTurnedOnInNet())) {
                 if (dev_type == Devices.SWITCH.getDeviceNum()) {
                     Switch sw = new Switch(name, src);
                     sw.initList(getSwitchListDevices(b));
 
                     if (hubTime - sw.getTimestamp() <= 300 || hubTime - hub.getWhoIsHereTime() <= 300) {
-                        System.out.println(sw.getDevicesNames());
+//                        System.out.println(sw.getDevicesNames());
                         // если мы получаем I AM HERE, то должны отправить GET STATUS устройству и установить время отправки в локальном хранилище для устройства.
                         sw.setTurnedOnInNet(true);
                         sw.setSerial(serial);
@@ -1216,114 +1245,171 @@ class PacketEncoder {
                         hub.putNewDeviceBySrc(envSensor);
                     }
                 }
-            }
-            else throw new RuntimeException("1");
-        }
-        else if (cmd == Commands.STATUS.getCommandNum()) {
+            } else throw new RuntimeException("1");
+        } else if (cmd == Commands.STATUS.getCommandNum()) {
             long hubTime = hub.getTimestamp();
             //todo сделать
             if (!(hub.contains(src) && !hub.getDevice(src).getTurnedOnInNet())) {
-            if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
-                int length = b[packetOffset++];
-                ULEB128Util.bytesCounter = 0;
-                if (hub.getSrcDevice().containsKey(src)) {
-                    Device sensor = hub.getSrcDevice().get(src);
-                    if (sensor.isHasTempDevice()) {
-                        long tempBound = ULEB128Util.decode(b, packetOffset);
-                        packetOffset += ULEB128Util.bytesCounter;
-                        ULEB128Util.bytesCounter = 0;
-                        sensor.setTempBound(tempBound);
+                if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
+                    int length = b[packetOffset++];
+                    ULEB128Util.bytesCounter = 0;
+                    if (hub.getSrcDevice().containsKey(src)) {
+                        EnvSensor sensor = (EnvSensor) hub.getSrcDevice().get(src);
+                        if (sensor.isHasTempDevice()) {
+                            long tempBound = ULEB128Util.decode(b, packetOffset);
+                            packetOffset += ULEB128Util.bytesCounter;
+                            ULEB128Util.bytesCounter = 0;
+                            sensor.setTempValue(tempBound);
+                        }
+                        if (sensor.isHasWaterDevice()) {
+                            long waterBound = ULEB128Util.decode(b, packetOffset);
+                            packetOffset += ULEB128Util.bytesCounter;
+                            ULEB128Util.bytesCounter = 0;
+                            sensor.setWaterValue(waterBound);
+                        }
+                        if (sensor.isHasLuxDevice()) {
+                            long luxBound = ULEB128Util.decode(b, packetOffset);
+                            packetOffset += ULEB128Util.bytesCounter;
+                            ULEB128Util.bytesCounter = 0;
+                            sensor.setLuxValue(luxBound);
+                        }
+                        if (sensor.isHasAirDevice()) {
+                            long airBound = ULEB128Util.decode(b, packetOffset);
+                            packetOffset += ULEB128Util.bytesCounter;
+                            ULEB128Util.bytesCounter = 0;
+                            sensor.setAirValue(airBound);
+                        }
+
+                        // пробежаться по массиву триггеров надо.
+
+                        List<Trigger> list = sensor.getList();
+                        for (Trigger trigger : list) {
+                            int turnOnOff = trigger.getTurnOnOff();
+                            int lessOrMore = trigger.getLessOrMore();
+                            int sensorType = trigger.getSensorType();
+                            long triggerBound = trigger.getValue();
+                            long sensorValue = 0;
+                            String name = trigger.getName();
+                            if (sensorType == 0) sensorValue = sensor.getTempValue();
+                            else if (sensorType == 1) sensorValue = sensor.getWaterValue();
+                            else if (sensorType == 2) sensorValue = sensor.getLuxValue();
+                            else if (sensorType == 3) sensorValue = sensor.getAirValue();
+                            Device device = hub.getDevice(name);
+                            if (device.getDev_type() == 3) {
+                                device = (Switch) device;
+                            }
+                            else if (device.getDev_type() == 4) {
+                                device = (Lamp) device;
+                            }
+                            else if (device.getDev_type() == 5) {
+                                device = (Socket) device;
+                            }
+
+                            if (lessOrMore == 0) {
+                                if (sensorValue < triggerBound) {
+                                    if (device.getDev_type() == 3) {
+                                        device.setState((byte) turnOnOff);
+                                        List<String> devicesNames = device.getDevicesNames();
+                                        for (String l : devicesNames) {
+                                            Device lampOrSocket = hub.getDevice(l);
+                                            lampOrSocket.setState((byte) turnOnOff);
+                                            hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
+                                            hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
+                                            ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), turnOnOff, lampOrSocket.getDev_type()));
+                                        }
+                                    }
+                                    else {
+                                        device.setState((byte) turnOnOff);
+                                        hub.executeSETSTATUS(device.getSrc(), turnOnOff, device.getDev_type());
+                                    }
+                                }
+                            }
+                            else {
+                                if (sensorValue > triggerBound) {
+                                    if (device.getDev_type() == 3) {
+                                        device.setState((byte) turnOnOff);
+                                        List<String> devicesNames = device.getDevicesNames();
+                                        for (String l : devicesNames) {
+                                            Device lampOrSocket = hub.getDevice(l);
+                                            lampOrSocket.setState((byte) turnOnOff);
+                                            hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
+                                            hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
+                                            ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), turnOnOff, lampOrSocket.getDev_type()));
+                                        }
+                                    }
+                                    else {
+                                        device.setState((byte) turnOnOff);
+                                        hub.executeSETSTATUS(device.getSrc(), turnOnOff, device.getDev_type());
+                                    }
+                                }
+                            }
+
+                        }
+
+                        //todo в зависимости от значений надо формировать команды
+                        hub.getSrcDevice().put(src, sensor);
+                        hub.getNameDevice().put(sensor.getName(), sensor);
+                        // сделать тут статус
                     }
-                    if (sensor.isHasWaterDevice()) {
-                        long waterBound = ULEB128Util.decode(b, packetOffset);
-                        packetOffset += ULEB128Util.bytesCounter;
-                        ULEB128Util.bytesCounter = 0;
-                        sensor.setWaterBound(waterBound);
+                } else if (dev_type == Devices.SWITCH.getDeviceNum()) {
+                    Device sw = hub.getDevice(src);
+                    long swTime = sw.getTimestamp();
+                    if (hubTime - swTime <= 300) {
+                        int state = b[packetOffset++];
+                        sw.setState((byte) state);
+                        List<String> list = sw.getDevicesNames();
+                        for (String l : list) {
+                            Device lampOrSocket = hub.getDevice(l);
+                            lampOrSocket.setState((byte) state);
+                            hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
+                            hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
+                            ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), state, lampOrSocket.getDev_type()));
+                        }
+//                        System.out.println("выключли все устройства " + sw.getName());
+                    } else {
+                        sw.setTurnedOnInNet(false);
+                        List<String> list = sw.getDevicesNames();
+                        for (String l : list) {
+                            Device device = hub.getDevice(l);
+                            device.setTurnedOnInNet(false);
+                            hub.putNewDeviceByName(device);
+                            hub.putNewDeviceByName(device);
+//                            System.out.println(l + " умер");
+                        }
+//                        System.out.println("упс.. выключатель умер");
                     }
-                    if (sensor.isHasLuxDevice()) {
-                        long luxBound = ULEB128Util.decode(b, packetOffset);
-                        packetOffset += ULEB128Util.bytesCounter;
-                        ULEB128Util.bytesCounter = 0;
-                        sensor.setLuxBound(luxBound);
-                    }
-                    if (sensor.isHasAirDevice()) {
-                        long airBound = ULEB128Util.decode(b, packetOffset);
-                        packetOffset += ULEB128Util.bytesCounter;
-                        ULEB128Util.bytesCounter = 0;
-                        sensor.setAirBound(airBound);
+                } else if (dev_type == Devices.LAMP.getDeviceNum()) {
+                    Lamp lamp = (Lamp) hub.getDevice(src);
+                    long deviceTime = lamp.getTimestamp();
+                    if (hubTime - deviceTime <= 300) {
+                        int state = b[packetOffset++];
+                        lamp.setTurnedOnInNet(true);
+                        lamp.setState((byte) state);
+                        hub.putNewDeviceBySrc(lamp);
+                        hub.putNewDeviceByName(lamp);
+                        ans.append(hub.executeSETSTATUS(lamp.getSrc(), state, lamp.getDev_type()));
+//                        System.out.println("изменили состояние лампы");
+                    } else {
+                        lamp.setTurnedOnInNet(false);
+                        hub.putNewDeviceBySrc(lamp);
+                        hub.putNewDeviceByName(lamp);
                     }
 
-                    hub.getSrcDevice().put(src, sensor);
-                    hub.getNameDevice().put(sensor.getName(), sensor);
-                    // сделать тут статус
-                }
-
-
-            }
-            else if (dev_type == Devices.SWITCH.getDeviceNum()) {
-                Device sw = hub.getDevice(src);
-                long swTime = sw.getTimestamp();
-                if (hubTime - swTime <= 300) {
-                    int state = b[packetOffset++];
-                    sw.setState((byte) state);
-                    List<String> list = sw.getDevicesNames();
-                    for (String l : list) {
-                        Device lampOrSocket = hub.getDevice(l);
-                        lampOrSocket.setState((byte) state);
-                        hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
-                        hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
-                        ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), state, lampOrSocket.getDev_type()));
+                } else if (dev_type == Devices.SOCKET.getDeviceNum()) {
+                    Socket socket = (Socket) hub.getDevice(src);
+                    long deviceTime = socket.getTimestamp();
+                    if (hubTime - deviceTime <= 300) {
+                        socket.setTurnedOnInNet(true);
+                        int state = b[packetOffset++];
+                        socket.setState((byte) state);
+                        hub.putNewDeviceBySrc(socket);
+                        hub.putNewDeviceByName(socket);
+                        ans.append(hub.executeSETSTATUS(socket.getSrc(), state, socket.getDev_type()));
+                    } else {
+                        socket.setTurnedOnInNet(false);
+                        hub.putNewDeviceBySrc(socket);
+                        hub.putNewDeviceByName(socket);
                     }
-                    System.out.println("выключли все устройства " + sw.getName());
-                }
-                else {
-                    sw.setTurnedOnInNet(false);
-                    List<String> list = sw.getDevicesNames();
-                    for (String l : list) {
-                        Device device = hub.getDevice(l);
-                        device.setTurnedOnInNet(false);
-                        hub.putNewDeviceByName(device);
-                        hub.putNewDeviceByName(device);
-                        System.out.println(l + " умер");
-                    }
-                    System.out.println("упс.. выключатель умер");
-                }
-            }
-            else if (dev_type == Devices.LAMP.getDeviceNum()) {
-                Lamp lamp = (Lamp) hub.getDevice(src);
-                long deviceTime = lamp.getTimestamp();
-                if (hubTime - deviceTime <= 300) {
-                    int state = b[packetOffset++];
-                    lamp.setTurnedOnInNet(true);
-                    lamp.setState((byte) state);
-                    hub.putNewDeviceBySrc(lamp);
-                    hub.putNewDeviceByName(lamp);
-                    ans.append(hub.executeSETSTATUS(lamp.getSrc(), state, lamp.getDev_type()));
-                    System.out.println("изменили состояние лампы");
-                }
-                else {
-                    lamp.setTurnedOnInNet(false);
-                    hub.putNewDeviceBySrc(lamp);
-                    hub.putNewDeviceByName(lamp);
-                }
-
-            }
-            else if (dev_type == Devices.SOCKET.getDeviceNum()) {
-                Socket socket = (Socket) hub.getDevice(src);
-                long deviceTime = socket.getTimestamp();
-                if (hubTime - deviceTime <= 300) {
-                    socket.setTurnedOnInNet(true);
-                    int state = b[packetOffset++];
-                    socket.setState((byte) state);
-                    hub.putNewDeviceBySrc(socket);
-                    hub.putNewDeviceByName(socket);
-                    ans.append(hub.executeSETSTATUS(socket.getSrc(), state, socket.getDev_type()));
-                }
-                else {
-                    socket.setTurnedOnInNet(false);
-                    hub.putNewDeviceBySrc(socket);
-                    hub.putNewDeviceByName(socket);
-                }
 //                else {
 //                    int state = b[packetOffset++];
 //                    socket.setState((byte) 0);
@@ -1331,7 +1417,7 @@ class PacketEncoder {
 //                    hub.putNewDeviceByName(socket);
 //                    ans.append(hub.executeSETSTATUS(socket.getSrc(), 0, socket.getDev_type()));
 //                }
-            }
+                }
             }
         }
 //        System.out.println("src - " + src);
@@ -1374,6 +1460,16 @@ class PacketEncoder {
             ULEB128Util.bytesCounter = 0;
             String name = getDeviceName(b);
             Trigger trigger = new Trigger(op, value, name);
+            trigger.setTurnOnOff(((op & (1 << 0)) != 0) ? 1 : 0);
+            trigger.setLessOrMore(((op & (1 << 1)) != 0) ? 1 : 0);
+            int bit2 = ((op & (1 << 2)) != 0) ? 1 : 0;
+            int bit3 = ((op & (1 << 3)) != 0) ? 1 : 0;
+            int sensorType = 0;
+            if ((bit2 & bit3) == 1) sensorType = 3;
+            else if ((bit2 & bit3) == 0) sensorType = 0;
+            else if (bit3 == 0 && bit2 == 1) sensorType = 1;
+            else if (bit3 == 1 && bit2 == 0) sensorType = 2;
+            trigger.setSensorType(sensorType);
             list.add(trigger);
             counter++;
 
@@ -1410,13 +1506,13 @@ class PacketEncoder {
             int expectedSum = b[b.length - 1];
             int crc8 = CheckSumUtil.computeCheckSum(checkSum);
             if (expectedSum == crc8) {
-                System.out.println("ok");
+//                System.out.println("ok");
                 String string = manageReceivedCommand(b);
                 if (string.length() != 0) {
                     try {
                         outputStream.write(Base64.getUrlDecoder().decode(string));
                         ans.append(string);
-                    }catch (IOException e) {
+                    } catch (IOException e) {
 
                     }
                 }
@@ -1457,6 +1553,7 @@ class ULEB128Util {
         }
         return ret;
     }
+
     public static long decode(int[] bytes, int pos) {
         long value = 0;
         int i = pos;
@@ -1466,7 +1563,7 @@ class ULEB128Util {
             bytesCounter += 1;
             value |= (long) (b & 0x7f) << shift;
             if ((b & 0x80) == 0) break;
-            shift+=7;
+            shift += 7;
         }
         return value;
     }
@@ -1474,6 +1571,7 @@ class ULEB128Util {
 
 class CheckSumUtil {
     private static final byte generator = 0x1D;
+
     public static int computeCheckSum(int[] bytes) {
 //        System.out.println("start point " + Arrays.toString(bytes));
         byte crc = 0;
@@ -1482,8 +1580,7 @@ class CheckSumUtil {
             for (int i = 0; i < 8; i++) {
                 if ((crc & 0x80) != 0) {
                     crc = (byte) ((crc << 1) ^ generator);
-                }
-                else {
+                } else {
                     crc <<= 1;
                 }
             }
@@ -1496,5 +1593,5 @@ class CheckSumUtil {
         System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
         newBytes[bytes.length] = crc;
         return computeCheckSum(newBytes) == 0;
-     }
+    }
 }
