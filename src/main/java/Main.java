@@ -1366,6 +1366,7 @@ class PacketEncoder {
                             ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), state, lampOrSocket.getDev_type()));
                         }
 
+
 //                        System.out.println("выключли все устройства " + sw.getName());
                     } else {
                         sw.setTurnedOnInNet(false);
