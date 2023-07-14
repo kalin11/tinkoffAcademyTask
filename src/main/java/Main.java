@@ -4,45 +4,6 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        //todo доделать логику у EnvSensor
-        //todo timer
-        //todo если мы кидаем какую-то команду, то в dev_type мы шлем тип устройства на которое мы шлем. если шлем на лампу, то dev_type лампы
-        //todo когда-то надо заюзать GETSTATUS. если мы не запрашиваем GETSTAUS, то у переключателя просто не установится адрес для отправки команды STATUS.
-//        String a = "DbMG_38BBgaI0Kv6kzGK";
-////        System.out.println(Arrays.toString(b));
-//        PacketEncoder encoder = new PacketEncoder("DbMG_38BBgaI0Kv6kzGK");
-//        System.out.println(encoder.getLength());
-//        encoder.fillCRC();
-//        System.out.println(Arrays.toString(ULEB128Util.encode(1)));
-//        PacketEncoder encoder = new PacketEncoder("ELMG_38BAQEIU21hcnRIdWJr");
-//        System.out.println("че хочет - ");
-//        encoder.getBytes();if ()
-//        System.out.println(Arrays.toString("SmartHub".getBytes()));
-//
-//        SmartHub smartHub = new SmartHub();
-//        smartHub.buildCmd();
-//Q1BBZGdpQURCQVVCSmdDUEFkZ2lBRUJBVUF6dw
-//        PacketEncoder encoder = new PacketEncoder();
-//        System.out.println(encoder.getByte("0d"));
-//        System.out.println(Arrays.toString(ULEB128Util.encode(819)));
-//        System.out.println(ULEB128Util.decode(ULEB128Util.encode(819)));
-//        int[] bytes = new int[] {0xb3, 0x06, 0xff, 0x7f, 0x01, 0x06, 0x06, 0x88, 0xd0, 0xab,0xfa, 0x93, 0x31};
-//        int[] bytes = new int[] {0xb3, 0x06, 0xff, 0x7f, 0x03, 0x06, 0x06, 0xa8, 0xd0, 0xab, 0x9c, 0x94,0x31};
-//        int[] bytes = new int[] {0xb3, 0x06, 0xff, 0x7f, 0x04, 0x06, 0x06,  0x8c, 0xd1, 0xab, 0x9c, 0x94, 0x31};
-//        int[] bytes = new int[] {0x0d, 0x06, 0xff, 0x7f, 0x05, 0x06, 0x06,  0xf0, 0xd1, 0xab, 0x9c, 0x94, 0x31, 0xa4};
-//        System.out.println(bytes[0]);
-//        int[] bytes = new int[] {0xb3};
-//        System.out.println("1 - " + Integer.toHexString(CheckSumUtil.computeCheckSum(bytes)));
-////        Integer.parseInt(Integer.toHexString(crc).substring(6, 8), 16)
-//        int checkSum = CheckSumUtil.computeCheckSum(bytes);
-//        System.out.println("11 - " + checkSum);
-//        System.out.println(CheckSumUtil.validateCheckSum(bytes, checkSum));
-//        System.out.println("validate check sum " + CheckSumUtil.validateCheckSum(bytes, CheckSumUtil.computeCheckSum(bytes)));
-
-//        Hub hub = new Hub(819);
-//        hub.putNewDevice(new Lamp("LAMP01", 3));
-
-        // String url = args[0];  // URL of the server endpoint
         StringBuilder requestBody = new StringBuilder(); // Request body parameters
         URL url;
         HttpURLConnection conn;
@@ -51,7 +12,7 @@ public class Main {
         BufferedReader in;
         Hub hub = new Hub(ULEB128Util.decode(ULEB128Util.encode(Long.parseLong(args[1], 16)), 0));
         requestBody = new StringBuilder(hub.executeWHOISHERE());
-//        System.out.println(requestBody);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         boolean first = true;
         try {
             url = new URL(args[0]);
@@ -84,7 +45,7 @@ public class Main {
             if (encoder.base64IsCorrect(response.toString())) {
                 encoder.setHub(hub);
                 encoder.setStringData(response.toString());
-                requestBody = new StringBuilder(encoder.buildStringForServer());
+                requestBody = new StringBuilder(encoder.buildStringForServer(outputStream));
 //                System.out.println(requestBody);
 
                 // Print the response
@@ -131,28 +92,9 @@ public class Main {
 //                    System.out.println("Response: " + response.toString());
                     PacketEncoder encoder = new PacketEncoder();
                     if (encoder.base64IsCorrect(response.toString())) {
-//                    if (encoder.base64IsCorrect("DoEg_3-iBgYG-PCIoJUxWgiCIPAdFQQEAScIgiDwHRYEBACA")) {
                         encoder.setStringData(response.toString());
-//                        encoder.setStringData("DoEg_3-iBgYG-PCIoJUxWgiCIPAdFQQEAScIgiDwHRYEBACA");
                         encoder.setHub(hub);
-//                    PacketEncoder encoder = new PacketEncoder();
-//                    if (first) {
-//                        first = false;
-//                        encoder = new PacketEncoder("JALwHQQCAghTRU5TT1IwMQMCDGQGTEFNUDAyD7AJBkxBTVAwM3A",hub);
-//                    }
-//                    else {
-//                        encoder = new PacketEncoder("DALwHQQCBAKlAdSOBos", hub);
-//                    }
-                        requestBody = new StringBuilder(encoder.buildStringForServer());
-//                        System.out.println("пытаемся отправить + " + requestBody.toString());
-//                    StringBuilder s = new StringBuilder(requestBody);
-//                    if (requestBody.length() != 0) {
-//                        Files.write(
-//                                Paths.get("/home/kalin/IdeaProjects/TinkoffSmartHome/src/main/java/testing.txt"),
-//                                s.append("\n").append(response).append("\n").toString().getBytes(),
-//                                StandardOpenOption.APPEND
-//                        );
-//                    }
+                        requestBody = new StringBuilder(encoder.buildStringForServer(outputStream));
                         // Print the response
 //                        System.out.println(Arrays.toString(response.toString().getBytes()));
                     }
@@ -624,6 +566,7 @@ class Hub extends Device {
             for (int i = 0; i < list.size(); i++) {
                 x[i] = (byte) (list.get(i) & 0x00ff);
             }
+
             ans.append(new String(Base64.getUrlEncoder().withoutPadding().encode(x)));
         }
         return ans.toString();
@@ -1047,13 +990,6 @@ enum Commands {
     }
 }
 
-enum Sensors {
-    TEMPERATURE,
-    WATER,
-    LUX,
-    AIR;
-}
-
 class PacketEncoder {
     private String stringData;
     private Integer[] bytes;
@@ -1066,12 +1002,8 @@ class PacketEncoder {
 
     private int packetOffset = 1;
 
-    //todo время
-
     public PacketEncoder() {
     }
-
-    ;
 
     public String getStringData() {
         return stringData;
@@ -1131,7 +1063,6 @@ class PacketEncoder {
             }
         } else if (cmd == Commands.WHOISHERE.getCommandNum()) {
             String name = getDeviceName(b);
-            //todo проверку что данное устройство отключено или не содержится в мапе
             if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
                 EnvSensor envSensor = new EnvSensor(name, src);
                 int sensors = getSensors(b);
@@ -1246,10 +1177,9 @@ class PacketEncoder {
                         hub.putNewDeviceBySrc(envSensor);
                     }
                 }
-            } else throw new RuntimeException("1");
+            }
         } else if (cmd == Commands.STATUS.getCommandNum()) {
             long hubTime = hub.getTimestamp();
-            //todo сделать
             if (!(hub.contains(src) && !hub.getDevice(src).getTurnedOnInNet())) {
                 if (dev_type == Devices.ENVSENSOR.getDeviceNum()) {
                     int length = b[packetOffset++];
@@ -1298,11 +1228,9 @@ class PacketEncoder {
                             Device device = hub.getDevice(name);
                             if (device.getDev_type() == 3) {
                                 device = (Switch) device;
-                            }
-                            else if (device.getDev_type() == 4) {
+                            } else if (device.getDev_type() == 4) {
                                 device = (Lamp) device;
-                            }
-                            else if (device.getDev_type() == 5) {
+                            } else if (device.getDev_type() == 5) {
                                 device = (Socket) device;
                             }
 
@@ -1318,14 +1246,12 @@ class PacketEncoder {
                                             hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
                                             ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), turnOnOff, lampOrSocket.getDev_type()));
                                         }
-                                    }
-                                    else {
+                                    } else {
                                         device.setState((byte) turnOnOff);
                                         hub.executeSETSTATUS(device.getSrc(), turnOnOff, device.getDev_type());
                                     }
                                 }
-                            }
-                            else {
+                            } else {
                                 if (sensorValue > triggerBound) {
                                     if (device.getDev_type() == 3) {
                                         device.setState((byte) turnOnOff);
@@ -1337,17 +1263,13 @@ class PacketEncoder {
                                             hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
                                             ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), turnOnOff, lampOrSocket.getDev_type()));
                                         }
-                                    }
-                                    else {
+                                    } else {
                                         device.setState((byte) turnOnOff);
                                         hub.executeSETSTATUS(device.getSrc(), turnOnOff, device.getDev_type());
                                     }
                                 }
                             }
-
                         }
-
-                        //todo в зависимости от значений надо формировать команды
                         hub.getSrcDevice().put(src, sensor);
                         hub.getNameDevice().put(sensor.getName(), sensor);
                         // сделать тут статус
@@ -1358,8 +1280,7 @@ class PacketEncoder {
                     if (hubTime - swTime <= 300) {
                         int state = b[packetOffset++];
                         sw.setState((byte) state);
-                        List<String> list = sw.getDevicesNames();
-                        for (String l : list) {
+                        for (String l : sw.getDevicesNames()) {
                             Device lampOrSocket = hub.getDevice(l);
                             lampOrSocket.setState((byte) state);
                             hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
@@ -1491,10 +1412,9 @@ class PacketEncoder {
         return new String(deviceName);
     }
 
-    public String buildStringForServer() {
+    public String buildStringForServer(ByteArrayOutputStream outputStream) {
         int counter = 0;
         StringBuilder ans = new StringBuilder();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         while (counter < bytes.length) {
             int length = bytes[counter];
             int[] b = new int[length + 2];
@@ -1509,7 +1429,6 @@ class PacketEncoder {
             int expectedSum = b[b.length - 1];
             int crc8 = CheckSumUtil.computeCheckSum(checkSum);
             if (expectedSum == crc8) {
-//                System.out.println("ok");
                 String string = manageReceivedCommand(b);
                 if (string.length() != 0) {
                     try {
@@ -1528,7 +1447,6 @@ class PacketEncoder {
             a[i] = (byte) (temp[i] & 0x00ff);
         }
         return new String(Base64.getUrlEncoder().withoutPadding().encode(a));
-//        return ans.toString();
     }
 }
 
@@ -1576,7 +1494,6 @@ class CheckSumUtil {
     private static final byte generator = 0x1D;
 
     public static int computeCheckSum(int[] bytes) {
-//        System.out.println("start point " + Arrays.toString(bytes));
         byte crc = 0;
         for (int b : bytes) {
             crc ^= b;
