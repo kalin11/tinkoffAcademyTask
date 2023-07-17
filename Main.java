@@ -1138,34 +1138,12 @@ class PacketEncoder {
 
                             if (lessOrMore == 0) {
                                 if (sensorValue < triggerBound) {
-                                    if (device.getDev_type() == 3) {
-                                        device.setState((byte) turnOnOff);
-                                        List<String> devicesNames = device.getDevicesNames();
-                                        for (String l : devicesNames) {
-                                            Device lampOrSocket = hub.getDevice(l);
-                                            lampOrSocket.setState((byte) turnOnOff);
-                                            hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
-                                            hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
-                                            ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), turnOnOff, lampOrSocket.getDev_type()));
-                                        }
-                                    } else {
                                         device.setState((byte) turnOnOff);
                                         hub.executeSETSTATUS(device.getSrc(), turnOnOff, device.getDev_type());
                                     }
                                 }
                             } else {
                                 if (sensorValue > triggerBound) {
-                                    if (device.getDev_type() == 3) {
-                                        device.setState((byte) turnOnOff);
-                                        List<String> devicesNames = device.getDevicesNames();
-                                        for (String l : devicesNames) {
-                                            Device lampOrSocket = hub.getDevice(l);
-                                            lampOrSocket.setState((byte) turnOnOff);
-                                            hub.getSrcDevice().put(lampOrSocket.getSrc(), lampOrSocket);
-                                            hub.getNameDevice().put(lampOrSocket.getName(), lampOrSocket);
-                                            ans.append(hub.executeSETSTATUS(lampOrSocket.getSrc(), turnOnOff, lampOrSocket.getDev_type()));
-                                        }
-                                    } else {
                                         device.setState((byte) turnOnOff);
                                         hub.executeSETSTATUS(device.getSrc(), turnOnOff, device.getDev_type());
                                     }
